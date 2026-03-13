@@ -53,23 +53,23 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TIMR-01 | — | Pending |
-| TIMR-02 | — | Pending |
-| TIMR-03 | — | Pending |
-| TIMR-04 | — | Pending |
-| TIMR-05 | — | Pending |
-| AUDO-01 | — | Pending |
-| AUDO-02 | — | Pending |
-| AUDO-03 | — | Pending |
-| AUDO-04 | — | Pending |
-| UIFP-01 | — | Pending |
-| UIFP-02 | — | Pending |
+| TIMR-01 | Phase 1 | Pending |
+| TIMR-02 | Phase 1 | Pending |
+| TIMR-03 | Phase 1 | Pending |
+| TIMR-04 | Phase 1 | Pending |
+| TIMR-05 | Phase 1 | Pending |
+| UIFP-02 | Phase 1 | Pending |
+| UIFP-01 | Phase 2 | Pending |
+| AUDO-01 | Phase 3 | Pending |
+| AUDO-02 | Phase 3 | Pending |
+| AUDO-03 | Phase 3 | Pending |
+| AUDO-04 | Phase 3 | Pending |
 
 **Coverage:**
 - v1 requirements: 11 total
-- Mapped to phases: 0
-- Unmapped: 11
+- Mapped to phases: 11
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-13*
-*Last updated: 2026-03-13 after initial definition*
+*Last updated: 2026-03-13 after roadmap creation*
