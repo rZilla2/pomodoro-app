@@ -28,10 +28,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Work duration and break duration are configurable and persist across app restarts
   4. App launches at login with no Dock icon — it just appears in the menu bar
   5. Timer uses clock-based elapsed time and survives sleep/wake without drifting
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 01-01: TBD
+- [ ] 01-01-PLAN.md — Xcode project scaffold + TimerEngine state machine with unit tests
+- [ ] 01-02-PLAN.md — Wire live countdown to menu bar, add controls, launch-at-login
 
 ### Phase 2: Floating Panel
 **Goal**: Users can control the timer from an always-on-top floating window that stays visible above all other apps including fullscreen spaces
@@ -68,6 +69,6 @@ Phases execute in numeric order: 1 → 2 → 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 0/? | Not started | - |
+| 1. Foundation | 0/2 | Not started | - |
 | 2. Floating Panel | 0/? | Not started | - |
 | 3. Audio + Polish | 0/? | Not started | - |
