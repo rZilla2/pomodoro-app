@@ -12,7 +12,7 @@ Three phases that build the app from the inside out: a solid engine and menu bar
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Foundation** - Timer engine + menu bar shell — the invisible core everything else depends on
+- [x] **Phase 1: Foundation** - Timer engine + menu bar shell — the invisible core everything else depends on
 - [ ] **Phase 2: Floating Panel** - The always-on-top window users actually touch to start, pause, and stop
 - [ ] **Phase 3: Audio + Polish** - Ambient sounds, end chime, sound picker — makes the app shippable
 
@@ -31,8 +31,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 2 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — Xcode project scaffold + TimerEngine state machine with unit tests
-- [ ] 01-02-PLAN.md — Wire live countdown to menu bar, add controls, launch-at-login
+- [x] 01-01-PLAN.md — Xcode project scaffold + TimerEngine state machine with unit tests
+- [x] 01-02-PLAN.md — Wire live countdown to menu bar, add controls, launch-at-login
 
 ### Phase 2: Floating Panel
 **Goal**: Users can control the timer from an always-on-top floating window that stays visible above all other apps including fullscreen spaces
@@ -69,6 +69,6 @@ Phases execute in numeric order: 1 → 2 → 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 1/2 | In Progress|  |
+| 1. Foundation | 2/2 | Complete | 2026-03-13 |
 | 2. Floating Panel | 0/? | Not started | - |
 | 3. Audio + Polish | 0/? | Not started | - |
