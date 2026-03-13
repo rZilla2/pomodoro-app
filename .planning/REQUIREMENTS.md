@@ -8,10 +8,10 @@
 ### Timer
 
 - [ ] **TIMR-01**: User can see countdown in the macOS menu bar
-- [ ] **TIMR-02**: User can start, pause, and stop the timer from the floating window
-- [ ] **TIMR-03**: User can configure work duration (default 25 min)
-- [ ] **TIMR-04**: User can configure break duration (default 5 min)
-- [ ] **TIMR-05**: Timer auto-transitions from work to break when work timer ends
+- [x] **TIMR-02**: User can start, pause, and stop the timer from the floating window
+- [x] **TIMR-03**: User can configure work duration (default 25 min)
+- [x] **TIMR-04**: User can configure break duration (default 5 min)
+- [x] **TIMR-05**: Timer auto-transitions from work to break when work timer ends
 
 ### Audio
 
@@ -54,10 +54,10 @@
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | TIMR-01 | Phase 1 | Pending |
-| TIMR-02 | Phase 1 | Pending |
-| TIMR-03 | Phase 1 | Pending |
-| TIMR-04 | Phase 1 | Pending |
-| TIMR-05 | Phase 1 | Pending |
+| TIMR-02 | Phase 1 | Complete |
+| TIMR-03 | Phase 1 | Complete |
+| TIMR-04 | Phase 1 | Complete |
+| TIMR-05 | Phase 1 | Complete |
 | UIFP-02 | Phase 1 | Pending |
 | UIFP-01 | Phase 2 | Pending |
 | AUDO-01 | Phase 3 | Pending |
