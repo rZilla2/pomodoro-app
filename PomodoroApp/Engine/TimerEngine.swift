@@ -53,6 +53,14 @@ final class TimerEngine: ObservableObject {
         timerState = .paused
     }
 
+    func startBreak() {
+        ticker?.invalidate()
+        ticker = nil
+        currentMode = .break_
+        targetDuration = breakDuration * 60
+        beginSession()
+    }
+
     func stop() {
         ticker?.invalidate()
         ticker = nil
