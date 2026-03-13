@@ -7,6 +7,7 @@ import SwiftUI
 final class AppDelegate: NSObject, NSApplicationDelegate {
     var statusItem: NSStatusItem?
     var timerEngine: TimerEngine?
+    var floatingPanel: FloatingPanelWindow?
     private var popover: NSPopover?
     private var cancellables = Set<AnyCancellable>()
 
@@ -47,6 +48,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 self?.updateStatusTitle()
             }
             .store(in: &cancellables)
+
+        // Set up floating panel
+        let panel = FloatingPanelWindow(timerEngine: engine)
+        panel.center()
+        floatingPanel = panel
 
         // Register for launch at login (zero-friction)
         registerLaunchAtLogin()
@@ -91,6 +97,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
             // Ensure the popover's window can receive key events
             popover.contentViewController?.view.window?.makeKey()
+        }
+    }
+
+    // MARK: - Floating Panel
+
+    func showPanel() {
+        floatingPanel?.orderFrontRegardless()
+    }
+
+    func hidePanel() {
+        floatingPanel?.orderOut(nil)
+    }
+
+    func togglePanel() {
+        if let panel = floatingPanel, panel.isVisible {
+            hidePanel()
+        } else {
+            showPanel()
         }
     }
 

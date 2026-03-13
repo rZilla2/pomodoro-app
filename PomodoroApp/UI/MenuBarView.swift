@@ -65,6 +65,12 @@ struct MenuBarView: View {
 
             Divider()
 
+            Button("Toggle Panel") {
+                (NSApp.delegate as? AppDelegate)?.togglePanel()
+            }
+
+            Divider()
+
             Button("Quit") {
                 NSApplication.shared.terminate(nil)
             }
