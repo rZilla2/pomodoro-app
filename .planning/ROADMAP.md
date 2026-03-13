@@ -57,10 +57,10 @@ Plans:
   2. Selected ambient sound loops during active focus sessions and stops on pause, stop, or session end
   3. A chime plays when a work session ends without overlapping or mixing with ambient audio
   4. Ambient sound selection persists across sessions (last-used sound remembered)
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 03-01: TBD
+- [ ] 03-01-PLAN.md — AudioEngine + SoundPickerView, wired into TimerEngine lifecycle and floating panel
 
 ## Progress
 
@@ -71,4 +71,4 @@ Phases execute in numeric order: 1 → 2 → 3
 |-------|----------------|--------|-----------|
 | 1. Foundation | 2/2 | Complete | 2026-03-13 |
 | 2. Floating Panel | 0/1 | Not started | - |
-| 3. Audio + Polish | 0/? | Not started | - |
+| 3. Audio + Polish | 0/1 | Not started | - |
