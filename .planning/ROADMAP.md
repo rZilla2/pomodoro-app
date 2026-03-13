@@ -43,10 +43,10 @@ Plans:
   2. User can start, pause, stop, and trigger a break from the floating window
   3. Floating window does not steal keyboard focus from whatever app the user is working in
   4. Window shows the live timer matching the menu bar countdown
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 02-01: TBD
+- [ ] 02-01-PLAN.md — NSPanel floating window with SwiftUI controls, wired to existing TimerEngine
 
 ### Phase 3: Audio + Polish
 **Goal**: Users can play ambient sound during focus sessions and hear a chime when sessions end — the app is fully shippable
@@ -70,5 +70,5 @@ Phases execute in numeric order: 1 → 2 → 3
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 2/2 | Complete | 2026-03-13 |
-| 2. Floating Panel | 0/? | Not started | - |
+| 2. Floating Panel | 0/1 | Not started | - |
 | 3. Audio + Polish | 0/? | Not started | - |
