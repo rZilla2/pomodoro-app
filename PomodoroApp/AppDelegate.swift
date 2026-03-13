@@ -18,9 +18,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Set up status item
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        statusItem?.button?.title = formatTime(engine.workDuration * 60)
-        statusItem?.button?.action = #selector(togglePopover)
-        statusItem?.button?.target = self
+        if let button = statusItem?.button {
+            button.font = NSFont.monospacedDigitSystemFont(ofSize: NSFont.systemFontSize, weight: .regular)
+            button.title = formatTime(engine.workDuration * 60)
+            button.action = #selector(togglePopover)
+            button.target = self
+        }
 
         // Set up popover with MenuBarView
         let popover = NSPopover()
