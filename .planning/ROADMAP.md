@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation** - Timer engine + menu bar shell — the invisible core everything else depends on
 - [ ] **Phase 2: Floating Panel** - The always-on-top window users actually touch to start, pause, and stop
-- [ ] **Phase 3: Audio + Polish** - Ambient sounds, end chime, sound picker — makes the app shippable
+- [x] **Phase 3: Audio + Polish** - Ambient sounds, end chime, sound picker — makes the app shippable
 
 ## Phase Details
 
@@ -60,7 +60,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 03-01-PLAN.md — AudioEngine + SoundPickerView, wired into TimerEngine lifecycle and floating panel
+- [x] 03-01-PLAN.md — AudioEngine + SoundPickerView, wired into TimerEngine lifecycle and floating panel
 
 ## Progress
 
@@ -71,4 +71,4 @@ Phases execute in numeric order: 1 → 2 → 3
 |-------|----------------|--------|-----------|
 | 1. Foundation | 2/2 | Complete | 2026-03-13 |
 | 2. Floating Panel | 0/1 | Not started | - |
-| 3. Audio + Polish | 0/1 | Not started | - |
+| 3. Audio + Polish | 1/1 | Complete | 2026-03-13 |

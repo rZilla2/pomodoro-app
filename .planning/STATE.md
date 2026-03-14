@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: phase_complete
-stopped_at: Completed 01-02-PLAN.md (Phase 1 complete)
-last_updated: "2026-03-13T20:10:00Z"
-last_activity: 2026-03-13 — Completed 01-02 (Menu bar UI, controls, launch-at-login)
+stopped_at: Completed 03-01-PLAN.md (Phase 3 complete — all phases done)
+last_updated: "2026-03-14T01:56:49Z"
+last_activity: 2026-03-13 — Completed 03-01 (AudioEngine, SoundPickerView, ambient looping, chime)
 progress:
   total_phases: 3
-  completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  completed_phases: 3
+  total_plans: 4
+  completed_plans: 4
   percent: 100
 ---
 
@@ -21,29 +21,31 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-13)
 
 **Core value:** Start a focus timer in under 2 seconds with zero friction
-**Current focus:** Phase 1 complete — ready for Phase 2
+**Current focus:** All phases complete — app is functionally shippable
 
 ## Current Position
 
-Phase: 1 of 3 (Foundation) — COMPLETE
-Plan: 2 of 2 in current phase
+Phase: 3 of 3 (Audio + Polish) — COMPLETE
+Plan: 1 of 1 in current phase
 Status: Phase Complete
-Last activity: 2026-03-13 — Completed 01-02 (Menu bar UI, controls, launch-at-login)
+Last activity: 2026-03-13 — Completed 03-01 (AudioEngine, SoundPickerView, ambient looping, chime)
 
 Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 2
-- Average duration: 10min
-- Total execution time: 20min
+- Total plans completed: 4
+- Average duration: 14min
+- Total execution time: 54min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 1. Foundation | 2/2 | 20min | 10min |
+| 2. Floating Panel | 1/1 | — | — |
+| 3. Audio + Polish | 1/1 | 34min | 34min |
 
 **Recent Trend:**
 - Last 5 plans: —
@@ -65,18 +67,21 @@ Recent decisions affecting current work:
 - [Phase 01-foundation]: Swift Testing over XCTest (XCTest unavailable with Command Line Tools only)
 - [Phase 01-foundation]: NSPopover over NSMenu for menu bar dropdown -- better SwiftUI integration
 - [Phase 01-foundation]: Monospaced digit font (.monospacedDigit()) for countdown to prevent jitter
+- [Phase 03-audio-polish]: Bundle.module over Bundle.main for SPM resource lookup
+- [Phase 03-audio-polish]: Stored AVAudioPlayer as instance properties to prevent ARC deallocation
+- [Phase 03-audio-polish]: stopAmbient() before playChime() ordering to prevent overlap
 
 ### Pending Todos
 
-None yet.
+- Replace placeholder .m4a files with real CC0 ambient sounds (Freesound.org or Pixabay)
 
 ### Blockers/Concerns
 
-- Audio file sourcing: need royalty-free files for 6 ambient sounds before Phase 3 (Freesound.org CC0 or Pixabay)
+- Audio file sourcing: placeholder .m4a files need replacing with real CC0 ambient sounds before shipping
 - Notarization: SMAppService (launch-at-login) requires valid Apple Developer account before distribution
 
 ## Session Continuity
 
-Last session: 2026-03-13T20:10:00Z
-Stopped at: Completed 01-02-PLAN.md (Phase 1 complete)
+Last session: 2026-03-14T01:56:49Z
+Stopped at: Completed 03-01-PLAN.md (Phase 3 complete — all phases done)
 Resume file: None

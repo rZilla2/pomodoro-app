@@ -15,10 +15,10 @@
 
 ### Audio
 
-- [ ] **AUDO-01**: User hears a chime when a session ends
-- [ ] **AUDO-02**: User can play ambient sound (rain, ocean, forest, fireplace, white noise, coffee shop) during focus sessions
-- [ ] **AUDO-03**: User can select ambient sound from the floating window
-- [ ] **AUDO-04**: Ambient sound stops on pause/stop/session end and doesn't overlap chime
+- [x] **AUDO-01**: User hears a chime when a session ends
+- [x] **AUDO-02**: User can play ambient sound (rain, ocean, forest, fireplace, white noise, coffee shop) during focus sessions
+- [x] **AUDO-03**: User can select ambient sound from the floating window
+- [x] **AUDO-04**: Ambient sound stops on pause/stop/session end and doesn't overlap chime
 
 ### UI
 
@@ -60,10 +60,10 @@
 | TIMR-05 | Phase 1 | Complete |
 | UIFP-02 | Phase 1 | Complete |
 | UIFP-01 | Phase 2 | Pending |
-| AUDO-01 | Phase 3 | Pending |
-| AUDO-02 | Phase 3 | Pending |
-| AUDO-03 | Phase 3 | Pending |
-| AUDO-04 | Phase 3 | Pending |
+| AUDO-01 | Phase 3 | Complete |
+| AUDO-02 | Phase 3 | Complete |
+| AUDO-03 | Phase 3 | Complete |
+| AUDO-04 | Phase 3 | Complete |
 
 **Coverage:**
 - v1 requirements: 11 total
