@@ -4,6 +4,10 @@ struct ControlsView: View {
     @ObservedObject var timerEngine: TimerEngine
     @ObservedObject var audioEngine: AudioEngine
 
+    private var isCompact: Bool {
+        timerEngine.timerState == .running || timerEngine.timerState == .onBreak
+    }
+
     var body: some View {
         VStack(spacing: 6) {
             // Mode label (only when relevant)
@@ -20,30 +24,32 @@ struct ControlsView: View {
                 .foregroundColor(TokyoNight.fg)
                 .fixedSize()
 
-// Steppers
-            VStack(spacing: 4) {
-                StepperRow(
-                    label: "Focus:",
-                    value: $timerEngine.workDuration,
-                    range: 5...120,
-                    step: 5,
-                    accentColor: TokyoNight.blue
-                )
-                StepperRow(
-                    label: "Break:",
-                    value: $timerEngine.breakDuration,
-                    range: 1...30,
-                    step: 5,
-                    accentColor: TokyoNight.purple
-                )
+            if !isCompact {
+                // Steppers
+                VStack(spacing: 4) {
+                    StepperRow(
+                        label: "Focus:",
+                        value: $timerEngine.workDuration,
+                        range: 5...120,
+                        step: 5,
+                        accentColor: TokyoNight.blue
+                    )
+                    StepperRow(
+                        label: "Break:",
+                        value: $timerEngine.breakDuration,
+                        range: 1...30,
+                        step: 5,
+                        accentColor: TokyoNight.purple
+                    )
+                }
+
+                Spacer().frame(height: 4)
+
+                // Sound picker
+                SoundPickerView(audioEngine: audioEngine)
+
+                Spacer().frame(height: 4)
             }
-
-            Spacer().frame(height: 2)
-
-            // Sound picker
-            SoundPickerView(audioEngine: audioEngine)
-
-            Spacer().frame(height: 2)
 
             // Control buttons
             HStack(spacing: 12) {
@@ -83,13 +89,14 @@ struct ControlsView: View {
                 }
             }
         }
-        .padding(16)
-        .frame(width: 180)
+        .padding(18)
+        .frame(width: isCompact ? nil : 180)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(TokyoNight.bg)
+                .fill(TokyoNight.bg.opacity(0.85))
         )
         .clipShape(RoundedRectangle(cornerRadius: 12))
+        .animation(.easeInOut(duration: 0.2), value: isCompact)
     }
 
     private var modeLabel: String {
