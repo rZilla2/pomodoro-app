@@ -52,7 +52,7 @@ final class AudioEngine: ObservableObject {
         ambientPlayer?.stop()
         ambientPlayer = nil
 
-        guard let url = Bundle.main.url(forResource: selectedSound.filename, withExtension: "m4a") else {
+        guard let url = Bundle.module.url(forResource: selectedSound.filename, withExtension: "m4a") else {
             assertionFailure("AudioEngine: missing bundle resource for \(selectedSound.filename).m4a")
             return
         }
@@ -77,7 +77,7 @@ final class AudioEngine: ObservableObject {
         chimePlayer?.stop()
         chimePlayer = nil
 
-        guard let url = Bundle.main.url(forResource: "chime", withExtension: "m4a") else {
+        guard let url = Bundle.module.url(forResource: "chime", withExtension: "m4a") else {
             assertionFailure("AudioEngine: missing bundle resource for chime.m4a")
             return
         }
