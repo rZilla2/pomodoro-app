@@ -39,29 +39,23 @@ struct MenuBarView: View {
 
             Divider()
 
-            // Duration settings
+            // Duration steppers
             VStack(spacing: 8) {
-                HStack {
-                    Text("Work:")
-                        .frame(width: 50, alignment: .leading)
-                    Stepper(
-                        "\(timerEngine.workDuration) min",
-                        value: $timerEngine.workDuration,
-                        in: 1...120
-                    )
-                }
-
-                HStack {
-                    Text("Break:")
-                        .frame(width: 50, alignment: .leading)
-                    Stepper(
-                        "\(timerEngine.breakDuration) min",
-                        value: $timerEngine.breakDuration,
-                        in: 1...60
-                    )
-                }
+                StepperRow(
+                    label: "Focus:",
+                    value: $timerEngine.workDuration,
+                    range: 5...120,
+                    step: 5,
+                    accentColor: TokyoNight.blue
+                )
+                StepperRow(
+                    label: "Break:",
+                    value: $timerEngine.breakDuration,
+                    range: 1...30,
+                    step: 5,
+                    accentColor: TokyoNight.purple
+                )
             }
-            .font(.callout)
 
             Divider()
 
@@ -78,19 +72,16 @@ struct MenuBarView: View {
             .foregroundColor(.secondary)
         }
         .padding(16)
-        .frame(width: 240)
+        .frame(width: 220)
     }
 
     private var modeLabel: String {
         switch timerEngine.timerState {
-        case .idle:
-            return "Ready"
+        case .idle: return ""
         case .running:
-            return timerEngine.currentMode == .work ? "Working" : "Break"
-        case .paused:
-            return "Paused"
-        case .onBreak:
-            return "Break"
+            return timerEngine.currentMode == .work ? "" : "Break"
+        case .paused: return "Paused"
+        case .onBreak: return "Break"
         }
     }
 

@@ -8,7 +8,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var statusItem: NSStatusItem?
     var timerEngine: TimerEngine?
     var floatingPanel: FloatingPanelWindow?
-    private var popover: NSPopover?
     private var cancellables = Set<AnyCancellable>()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -20,23 +19,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Set up status item
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         if let button = statusItem?.button {
-            button.font = NSFont.monospacedDigitSystemFont(ofSize: NSFont.systemFontSize, weight: .regular)
+            button.image = NSImage(systemSymbolName: "flame", accessibilityDescription: "Pomodoro")
+            button.image?.size = NSSize(width: 14, height: 14)
+            button.image?.isTemplate = true
+            button.imagePosition = .imageLeading
+            button.font = NSFont.monospacedDigitSystemFont(ofSize: NSFont.systemFontSize, weight: .bold)
             button.title = formatTime(engine.workDuration * 60)
-            button.action = #selector(togglePopover)
+            button.action = #selector(statusItemClicked)
             button.target = self
         }
-
-        // Set up popover with MenuBarView
-        let popover = NSPopover()
-        popover.contentSize = NSSize(width: 240, height: 300)
-        popover.behavior = .transient
-        popover.contentViewController = NSHostingController(rootView: MenuBarView(timerEngine: engine))
-        self.popover = popover
 
         // Subscribe to timeRemaining for live countdown
         engine.$timeRemaining
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] seconds in
+            .sink { [weak self] _ in
                 self?.updateStatusTitle()
             }
             .store(in: &cancellables)
@@ -51,7 +47,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Set up floating panel
         let panel = FloatingPanelWindow(timerEngine: engine)
-        panel.center()
+        if let screen = NSScreen.main {
+            let screenFrame = screen.visibleFrame
+            let panelWidth = panel.frame.width
+            let x = screenFrame.maxX - panelWidth - 12
+            let y = screenFrame.maxY - panel.frame.height - 8
+            panel.setFrameOrigin(NSPoint(x: x, y: y))
+        }
         floatingPanel = panel
 
         // Register for launch at login (zero-friction)
@@ -86,18 +88,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         return String(format: "%02d:%02d", m, s)
     }
 
-    // MARK: - Popover
+    // MARK: - Status Item Click → Toggle Panel
 
-    @objc private func togglePopover() {
-        guard let popover = popover, let button = statusItem?.button else { return }
-
-        if popover.isShown {
-            popover.performClose(nil)
-        } else {
-            popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
-            // Ensure the popover's window can receive key events
-            popover.contentViewController?.view.window?.makeKey()
-        }
+    @objc private func statusItemClicked() {
+        togglePanel()
     }
 
     // MARK: - Floating Panel
@@ -106,13 +100,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         floatingPanel?.orderFrontRegardless()
     }
 
-    func hidePanel() {
+    @objc func hidePanelAction() {
         floatingPanel?.orderOut(nil)
     }
 
     func togglePanel() {
         if let panel = floatingPanel, panel.isVisible {
-            hidePanel()
+            hidePanelAction()
         } else {
             showPanel()
         }
@@ -121,6 +115,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - Launch at Login
 
     private func registerLaunchAtLogin() {
+        guard SMAppService.mainApp.status != .enabled else { return }
         do {
             try SMAppService.mainApp.register()
         } catch {

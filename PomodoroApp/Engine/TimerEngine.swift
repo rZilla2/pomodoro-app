@@ -9,6 +9,7 @@ final class TimerEngine: ObservableObject {
     @Published var timerState: TimerState = .idle
     @Published var timeRemaining: Int = 25 * 60
     @Published var currentMode: Mode = .work
+    @Published var canResumeWork: Bool = false
 
     @AppStorage("workDuration") var workDuration: Int = 25
     @AppStorage("breakDuration") var breakDuration: Int = 5
@@ -17,6 +18,7 @@ final class TimerEngine: ObservableObject {
     private var targetDuration: Int = 0
     private var ticker: Timer?
     private var pausedRemaining: Int = 0
+    private var savedWorkRemaining: Int = 0
 
     // MARK: - Public API
 
@@ -25,6 +27,7 @@ final class TimerEngine: ObservableObject {
             resumeFromPause()
             return
         }
+        canResumeWork = false
         targetDuration = (currentMode == .work ? workDuration : breakDuration) * 60
         beginSession()
     }
@@ -32,6 +35,7 @@ final class TimerEngine: ObservableObject {
     /// Start with a custom duration in seconds (for testing)
     func startWithDuration(seconds: Int) {
         currentMode = .work
+        canResumeWork = false
         targetDuration = seconds
         beginSession()
     }
@@ -41,6 +45,7 @@ final class TimerEngine: ObservableObject {
         ticker?.invalidate()
         ticker = nil
         currentMode = .break_
+        canResumeWork = false
         targetDuration = seconds
         beginSession()
     }
@@ -54,10 +59,25 @@ final class TimerEngine: ObservableObject {
     }
 
     func startBreak() {
+        // Save work progress if mid-session
+        if currentMode == .work && timerState == .running {
+            savedWorkRemaining = timeRemaining
+            canResumeWork = true
+        }
         ticker?.invalidate()
         ticker = nil
         currentMode = .break_
         targetDuration = breakDuration * 60
+        beginSession()
+    }
+
+    func resumeWork() {
+        guard canResumeWork, savedWorkRemaining > 0 else { return }
+        ticker?.invalidate()
+        ticker = nil
+        currentMode = .work
+        canResumeWork = false
+        targetDuration = savedWorkRemaining
         beginSession()
     }
 
@@ -66,6 +86,8 @@ final class TimerEngine: ObservableObject {
         ticker = nil
         startDate = nil
         currentMode = .work
+        canResumeWork = false
+        savedWorkRemaining = 0
         timeRemaining = workDuration * 60
         timerState = .idle
         NotificationCenter.default.removeObserver(self, name: NSWorkspace.didWakeNotification, object: nil)
@@ -82,7 +104,6 @@ final class TimerEngine: ObservableObject {
     }
 
     private func resumeFromPause() {
-        // Adjust startDate so elapsed time calculation accounts for paused time
         targetDuration = pausedRemaining
         startDate = Date()
         timeRemaining = pausedRemaining
@@ -127,15 +148,24 @@ final class TimerEngine: ObservableObject {
         NotificationCenter.default.removeObserver(self, name: NSWorkspace.didWakeNotification, object: nil)
 
         if currentMode == .work {
-            // Auto-transition to break
+            canResumeWork = false
             currentMode = .break_
             targetDuration = breakDuration * 60
             beginSession()
         } else {
-            // Break complete — return to idle
-            currentMode = .work
-            timeRemaining = workDuration * 60
-            timerState = .idle
+            // Break complete — resume work if saved, otherwise idle
+            if canResumeWork, savedWorkRemaining > 0 {
+                currentMode = .work
+                canResumeWork = false
+                targetDuration = savedWorkRemaining
+                savedWorkRemaining = 0
+                beginSession()
+            } else {
+                currentMode = .work
+                canResumeWork = false
+                timeRemaining = workDuration * 60
+                timerState = .idle
+            }
         }
     }
 }
