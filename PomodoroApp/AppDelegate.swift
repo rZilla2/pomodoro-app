@@ -3,6 +3,10 @@ import Combine
 import ServiceManagement
 import SwiftUI
 
+extension Notification.Name {
+    static let hidePanelRequested = Notification.Name("hidePanelRequested")
+}
+
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     var statusItem: NSStatusItem?
@@ -20,13 +24,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         timerEngine = engine
 
         // Set up status item
-        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        statusItem = NSStatusBar.system.statusItem(withLength: 90)
         if let button = statusItem?.button {
             button.image = NSImage(systemSymbolName: "flame", accessibilityDescription: "Pomodoro")
             button.image?.size = NSSize(width: 14, height: 14)
             button.image?.isTemplate = true
             button.imagePosition = .imageLeading
-            button.font = NSFont.monospacedDigitSystemFont(ofSize: NSFont.systemFontSize, weight: .bold)
+            button.font = NSFont.monospacedDigitSystemFont(ofSize: NSFont.systemFontSize, weight: .regular)
             button.title = formatTime(engine.workDuration * 60)
             button.action = #selector(statusItemClicked)
             button.target = self
@@ -59,6 +63,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         floatingPanel = panel
 
+        // Listen for hide-panel requests from SwiftUI
+        NotificationCenter.default.addObserver(
+            forName: .hidePanelRequested,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in
+                self?.hidePanelAction()
+            }
+        }
+
         // Register for launch at login (only if not already registered)
         if SMAppService.mainApp.status == .notRegistered {
             try? SMAppService.mainApp.register()
@@ -68,22 +83,49 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - Status Item Title
 
     private func updateStatusTitle() {
-        guard let engine = timerEngine else { return }
+        guard let engine = timerEngine, let button = statusItem?.button else { return }
         let time = formatTime(engine.timeRemaining)
 
+        // Determine which SF Symbol to show between flame and timer
+        let symbolName: String?
         switch engine.timerState {
         case .idle:
-            statusItem?.button?.title = time
+            symbolName = nil
         case .running:
-            if engine.currentMode == .break_ {
-                statusItem?.button?.title = "~ \(time)"
-            } else {
-                statusItem?.button?.title = time
-            }
+            symbolName = engine.currentMode == .break_ ? "cup.and.saucer.fill" : "play.fill"
         case .paused:
-            statusItem?.button?.title = "|| \(time)"
+            symbolName = "pause.fill"
         case .onBreak:
-            statusItem?.button?.title = "~ \(time)"
+            symbolName = "cup.and.saucer.fill"
+        }
+
+        if let symbolName,
+           let symbolImage = NSImage(systemSymbolName: symbolName, accessibilityDescription: nil) {
+            let attributed = NSMutableAttributedString()
+
+            // State icon as inline attachment
+            let attachment = NSTextAttachment()
+            let config = NSImage.SymbolConfiguration(pointSize: 12, weight: .medium)
+            attachment.image = symbolImage.withSymbolConfiguration(config)
+            let iconString = NSAttributedString(attachment: attachment)
+            attributed.append(iconString)
+
+            // Small space + time
+            attributed.append(NSAttributedString(string: " \(time)"))
+
+            // Match the button font for the time portion
+            let range = NSRange(location: 0, length: attributed.length)
+            attributed.addAttribute(.font, value: button.font ?? NSFont.monospacedDigitSystemFont(ofSize: NSFont.systemFontSize, weight: .regular), range: range)
+            // Nudge baseline so icon aligns vertically with text
+            let iconRange = NSRange(location: 0, length: iconString.length)
+            attributed.addAttribute(.baselineOffset, value: -1.0, range: iconRange)
+
+            button.attributedTitle = attributed
+        } else {
+            // Idle — pad with spaces to keep time position consistent with icon states
+            let padded = NSMutableAttributedString(string: "  \(time)")
+            padded.addAttribute(.font, value: button.font ?? NSFont.monospacedDigitSystemFont(ofSize: NSFont.systemFontSize, weight: .regular), range: NSRange(location: 0, length: padded.length))
+            button.attributedTitle = padded
         }
     }
 

@@ -38,7 +38,7 @@ final class AudioEngine: ObservableObject {
            let sound = AmbientSound(rawValue: raw) {
             selectedSound = sound
         } else {
-            selectedSound = .rain
+            selectedSound = .forest
         }
     }
 

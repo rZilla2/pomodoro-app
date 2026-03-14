@@ -40,29 +40,17 @@ final class FloatingPanelWindow: NSPanel {
         // Stay visible — don't hide
     }
 
-    // Resize the window when SwiftUI content changes size
+    // Resize the window when SwiftUI content changes size — pin top edge, grow downward
     override func layoutIfNeeded() {
         super.layoutIfNeeded()
         guard let hosting = hostingView else { return }
         let newSize = hosting.fittingSize
         if abs(frame.size.width - newSize.width) > 1 || abs(frame.size.height - newSize.height) > 1 {
-            // Keep top-left pinned by adjusting origin for height change
-            let heightDelta = newSize.height - frame.size.height
-            var newOrigin = frame.origin
-            newOrigin.y -= heightDelta
-            setFrame(NSRect(origin: newOrigin, size: newSize), display: true, animate: true)
+            // macOS origin is bottom-left; pin the top edge by adjusting y
+            let topY = frame.origin.y + frame.size.height
+            let newOrigin = NSPoint(x: frame.origin.x, y: topY - newSize.height)
+            setFrame(NSRect(origin: newOrigin, size: newSize), display: true, animate: false)
         }
     }
 
-    // Click on empty space dismisses the panel
-    override func mouseDown(with event: NSEvent) {
-        let location = event.locationInWindow
-        if let contentView = contentView, let hitView = contentView.hitTest(location) {
-            if hitView === contentView {
-                orderOut(nil)
-                return
-            }
-        }
-        super.mouseDown(with: event)
-    }
 }

@@ -9,15 +9,22 @@ struct SoundPickerView: View {
                 .font(.system(size: 10))
                 .foregroundColor(TokyoNight.comment)
 
-            Menu(audioEngine.selectedSound.displayName) {
+            Menu {
                 ForEach(AmbientSound.allCases) { sound in
                     Button(sound.displayName) {
                         audioEngine.select(sound)
                     }
                 }
+            } label: {
+                HStack(spacing: 3) {
+                    Text(audioEngine.selectedSound.displayName)
+                        .font(.system(size: 11))
+                        .foregroundColor(TokyoNight.fg)
+                    Image(systemName: "chevron.up.chevron.down")
+                        .font(.system(size: 7))
+                        .foregroundColor(TokyoNight.comment)
+                }
             }
-            .font(.system(size: 11))
-            .foregroundColor(TokyoNight.fg)
             .menuStyle(.borderlessButton)
             .fixedSize()
         }
