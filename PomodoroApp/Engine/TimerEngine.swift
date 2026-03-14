@@ -14,22 +14,36 @@ final class TimerEngine: ObservableObject {
     @AppStorage("workDuration") var workDuration: Int = 25
     @AppStorage("breakDuration") var breakDuration: Int = 5
 
+    unowned let audioEngine: AudioEngine
+
     private var startDate: Date?
     private var targetDuration: Int = 0
     private var ticker: Timer?
     private var pausedRemaining: Int = 0
     private var savedWorkRemaining: Int = 0
 
+    // MARK: - Init
+
+    init(audioEngine: AudioEngine) {
+        self.audioEngine = audioEngine
+    }
+
     // MARK: - Public API
 
     func start() {
         if timerState == .paused {
             resumeFromPause()
+            if currentMode == .work {
+                audioEngine.startAmbient()
+            }
             return
         }
         canResumeWork = false
         targetDuration = (currentMode == .work ? workDuration : breakDuration) * 60
         beginSession()
+        if currentMode == .work {
+            audioEngine.startAmbient()
+        }
     }
 
     /// Start with a custom duration in seconds (for testing)
@@ -38,12 +52,14 @@ final class TimerEngine: ObservableObject {
         canResumeWork = false
         targetDuration = seconds
         beginSession()
+        audioEngine.startAmbient()
     }
 
     /// Start break with a custom duration in seconds (for testing)
     func startBreakWithDuration(seconds: Int) {
         ticker?.invalidate()
         ticker = nil
+        audioEngine.stopAmbient()
         currentMode = .break_
         canResumeWork = false
         targetDuration = seconds
@@ -56,6 +72,7 @@ final class TimerEngine: ObservableObject {
         ticker?.invalidate()
         ticker = nil
         timerState = .paused
+        audioEngine.stopAmbient()
     }
 
     func startBreak() {
@@ -66,6 +83,7 @@ final class TimerEngine: ObservableObject {
         }
         ticker?.invalidate()
         ticker = nil
+        audioEngine.stopAmbient()
         currentMode = .break_
         targetDuration = breakDuration * 60
         beginSession()
@@ -79,12 +97,14 @@ final class TimerEngine: ObservableObject {
         canResumeWork = false
         targetDuration = savedWorkRemaining
         beginSession()
+        audioEngine.startAmbient()
     }
 
     func stop() {
         ticker?.invalidate()
         ticker = nil
         startDate = nil
+        audioEngine.stopAmbient()
         currentMode = .work
         canResumeWork = false
         savedWorkRemaining = 0
@@ -148,6 +168,9 @@ final class TimerEngine: ObservableObject {
         NotificationCenter.default.removeObserver(self, name: NSWorkspace.didWakeNotification, object: nil)
 
         if currentMode == .work {
+            // Stop ambient FIRST, then chime — ordering critical (AUDO-04)
+            audioEngine.stopAmbient()
+            audioEngine.playChime()
             canResumeWork = false
             currentMode = .break_
             targetDuration = breakDuration * 60
@@ -160,6 +183,7 @@ final class TimerEngine: ObservableObject {
                 targetDuration = savedWorkRemaining
                 savedWorkRemaining = 0
                 beginSession()
+                audioEngine.startAmbient()
             } else {
                 currentMode = .work
                 canResumeWork = false

@@ -3,7 +3,7 @@ import SwiftUI
 
 @MainActor
 final class FloatingPanelWindow: NSPanel {
-    init(timerEngine: TimerEngine) {
+    init(timerEngine: TimerEngine, audioEngine: AudioEngine) {
         super.init(
             contentRect: NSRect(x: 0, y: 0, width: 180, height: 240),
             styleMask: [.nonactivatingPanel],
@@ -22,7 +22,7 @@ final class FloatingPanelWindow: NSPanel {
 
         // No title bar — borderless panel
 
-        let hostingView = NSHostingView(rootView: ControlsView(timerEngine: timerEngine))
+        let hostingView = NSHostingView(rootView: ControlsView(timerEngine: timerEngine, audioEngine: audioEngine))
         hostingView.setFrameSize(hostingView.fittingSize)
         contentView = hostingView
         setContentSize(hostingView.fittingSize)

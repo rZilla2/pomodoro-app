@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ControlsView: View {
     @ObservedObject var timerEngine: TimerEngine
+    @ObservedObject var audioEngine: AudioEngine
 
     var body: some View {
         VStack(spacing: 6) {
@@ -38,6 +39,9 @@ struct ControlsView: View {
             }
 
             Spacer().frame(height: 2)
+
+            // Sound picker
+            SoundPickerView(audioEngine: audioEngine)
 
             // Control buttons
             HStack(spacing: 12) {

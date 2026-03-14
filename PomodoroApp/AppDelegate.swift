@@ -6,6 +6,7 @@ import SwiftUI
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     var statusItem: NSStatusItem?
+    var audioEngine: AudioEngine?
     var timerEngine: TimerEngine?
     var floatingPanel: FloatingPanelWindow?
     private var cancellables = Set<AnyCancellable>()
@@ -13,7 +14,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
 
-        let engine = TimerEngine()
+        let audio = AudioEngine()
+        audioEngine = audio
+        let engine = TimerEngine(audioEngine: audio)
         timerEngine = engine
 
         // Set up status item
@@ -46,7 +49,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             .store(in: &cancellables)
 
         // Set up floating panel
-        let panel = FloatingPanelWindow(timerEngine: engine)
+        let panel = FloatingPanelWindow(timerEngine: engine, audioEngine: audio)
         if let screen = NSScreen.main {
             let screenFrame = screen.visibleFrame
             let panelWidth = panel.frame.width

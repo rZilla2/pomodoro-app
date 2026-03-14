@@ -1,74 +1,68 @@
-import Testing
+import XCTest
 @testable import PomodoroApp
 
 @MainActor
-struct TimerEngineTests {
+final class TimerEngineTests: XCTestCase {
 
-    @Test func startSetsRunningState() {
-        let engine = TimerEngine()
+    func testStartSetsRunningState() {
+        let engine = TimerEngine(audioEngine: AudioEngine())
         engine.start()
-        #expect(engine.timerState == .running)
-        engine.stop() // cleanup
+        XCTAssertEqual(engine.timerState, .running)
+        engine.stop()
     }
 
-    @Test func pauseSetsState() {
-        let engine = TimerEngine()
+    func testPauseSetsState() {
+        let engine = TimerEngine(audioEngine: AudioEngine())
         engine.start()
         engine.pause()
-        #expect(engine.timerState == .paused)
-        engine.stop() // cleanup
+        XCTAssertEqual(engine.timerState, .paused)
+        engine.stop()
     }
 
-    @Test func stopResetsToIdle() {
-        let engine = TimerEngine()
+    func testStopResetsToIdle() {
+        let engine = TimerEngine(audioEngine: AudioEngine())
         engine.start()
         engine.stop()
-        #expect(engine.timerState == .idle)
-        #expect(engine.timeRemaining == engine.workDuration * 60)
+        XCTAssertEqual(engine.timerState, .idle)
+        XCTAssertEqual(engine.timeRemaining, engine.workDuration * 60)
     }
 
-    @Test func autoBreakTransition() async throws {
-        let engine = TimerEngine()
-        engine.startWithDuration(seconds: 1) // 1-second work session
-        // Wait for timer to expire and transition
+    func testAutoBreakTransition() async throws {
+        let engine = TimerEngine(audioEngine: AudioEngine())
+        engine.startWithDuration(seconds: 1)
         try await Task.sleep(for: .seconds(2))
-        #expect(engine.currentMode == .break_)
-        #expect(engine.timerState == .running) // auto-started break
-        engine.stop() // cleanup
+        XCTAssertEqual(engine.currentMode, .break_)
+        XCTAssertEqual(engine.timerState, .running)
+        engine.stop()
     }
 
-    @Test func workDurationDefault() {
-        let engine = TimerEngine()
-        #expect(engine.workDuration == 25)
+    func testWorkDurationDefault() {
+        let engine = TimerEngine(audioEngine: AudioEngine())
+        XCTAssertEqual(engine.workDuration, 25)
     }
 
-    @Test func breakDurationDefault() {
-        let engine = TimerEngine()
-        #expect(engine.breakDuration == 5)
+    func testBreakDurationDefault() {
+        let engine = TimerEngine(audioEngine: AudioEngine())
+        XCTAssertEqual(engine.breakDuration, 5)
     }
 
-    @Test func clockBasedTime() async throws {
-        let engine = TimerEngine()
+    func testClockBasedTime() async throws {
+        let engine = TimerEngine(audioEngine: AudioEngine())
         engine.startWithDuration(seconds: 10)
         try await Task.sleep(for: .seconds(2))
-        // Clock-based: timeRemaining should be approximately 10 - 2 = 8
-        // Allow 1 second tolerance for test execution timing
-        #expect(engine.timeRemaining <= 9)
-        #expect(engine.timeRemaining >= 7)
-        engine.stop() // cleanup
+        XCTAssertLessThanOrEqual(engine.timeRemaining, 9)
+        XCTAssertGreaterThanOrEqual(engine.timeRemaining, 7)
+        engine.stop()
     }
 
-    @Test func breakCompletionReturnsToIdle() async throws {
-        let engine = TimerEngine()
-        // Start a 1-second work session
+    func testBreakCompletionReturnsToIdle() async throws {
+        let engine = TimerEngine(audioEngine: AudioEngine())
         engine.startWithDuration(seconds: 1)
-        // Wait for work to complete and break to auto-start
         try await Task.sleep(for: .seconds(2))
-        #expect(engine.currentMode == .break_)
-        // Now force break to be 1 second and wait for it to complete
+        XCTAssertEqual(engine.currentMode, .break_)
         engine.startBreakWithDuration(seconds: 1)
         try await Task.sleep(for: .seconds(2))
-        #expect(engine.timerState == .idle)
-        #expect(engine.currentMode == .work)
+        XCTAssertEqual(engine.timerState, .idle)
+        XCTAssertEqual(engine.currentMode, .work)
     }
 }
