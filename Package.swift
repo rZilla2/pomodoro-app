@@ -14,6 +14,9 @@ let package = Package(
                 "Info.plist",
                 "PomodoroApp.entitlements",
             ],
+            resources: [
+                .process("Resources/"),
+            ],
             swiftSettings: [
                 .swiftLanguageMode(.v6),
             ]
