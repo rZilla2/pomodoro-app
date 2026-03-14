@@ -43,6 +43,8 @@ struct ControlsView: View {
             // Sound picker
             SoundPickerView(audioEngine: audioEngine)
 
+            Spacer().frame(height: 2)
+
             // Control buttons
             HStack(spacing: 12) {
                 if timerEngine.timerState == .idle || timerEngine.timerState == .paused {

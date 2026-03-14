@@ -13,7 +13,7 @@ Three phases that build the app from the inside out: a solid engine and menu bar
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation** - Timer engine + menu bar shell — the invisible core everything else depends on
-- [ ] **Phase 2: Floating Panel** - The always-on-top window users actually touch to start, pause, and stop
+- [x] **Phase 2: Floating Panel** - The always-on-top window users actually touch to start, pause, and stop
 - [x] **Phase 3: Audio + Polish** - Ambient sounds, end chime, sound picker — makes the app shippable
 
 ## Phase Details
@@ -46,7 +46,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 02-01-PLAN.md — NSPanel floating window with SwiftUI controls, wired to existing TimerEngine
+- [x] 02-01-PLAN.md — NSPanel floating window with SwiftUI controls, wired to existing TimerEngine
 
 ### Phase 3: Audio + Polish
 **Goal**: Users can play ambient sound during focus sessions and hear a chime when sessions end — the app is fully shippable
