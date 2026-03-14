@@ -16,6 +16,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var cancellables = Set<AnyCancellable>()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // Single instance: quit if another copy is already running
+        let dominated = NSRunningApplication.runningApplications(withBundleIdentifier: Bundle.main.bundleIdentifier ?? "")
+            .filter { $0 != .current }
+        if !dominated.isEmpty {
+            NSApp.terminate(nil)
+            return
+        }
+
         NSApp.setActivationPolicy(.accessory)
 
         let audio = AudioEngine()
@@ -24,7 +32,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         timerEngine = engine
 
         // Set up status item
-        statusItem = NSStatusBar.system.statusItem(withLength: 90)
+        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         if let button = statusItem?.button {
             button.image = NSImage(systemSymbolName: "flame", accessibilityDescription: "Pomodoro")
             button.image?.size = NSSize(width: 14, height: 14)
@@ -99,34 +107,32 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             symbolName = "cup.and.saucer.fill"
         }
 
-        if let symbolName,
-           let symbolImage = NSImage(systemSymbolName: symbolName, accessibilityDescription: nil) {
-            let attributed = NSMutableAttributedString()
+        // Pick the icon: flame when idle, state-specific otherwise
+        let iconName = symbolName ?? "flame"
+        guard let symbolImage = NSImage(systemSymbolName: iconName, accessibilityDescription: nil) else { return }
 
-            // State icon as inline attachment
-            let attachment = NSTextAttachment()
-            let config = NSImage.SymbolConfiguration(pointSize: 12, weight: .medium)
-            attachment.image = symbolImage.withSymbolConfiguration(config)
-            let iconString = NSAttributedString(attachment: attachment)
-            attributed.append(iconString)
+        let attributed = NSMutableAttributedString()
 
-            // Small space + time
-            attributed.append(NSAttributedString(string: " \(time)"))
+        // Icon as inline attachment
+        let attachment = NSTextAttachment()
+        let config = NSImage.SymbolConfiguration(pointSize: 12, weight: .medium)
+        attachment.image = symbolImage.withSymbolConfiguration(config)
+        let iconString = NSAttributedString(attachment: attachment)
+        attributed.append(iconString)
 
-            // Match the button font for the time portion
-            let range = NSRange(location: 0, length: attributed.length)
-            attributed.addAttribute(.font, value: button.font ?? NSFont.monospacedDigitSystemFont(ofSize: NSFont.systemFontSize, weight: .regular), range: range)
-            // Nudge baseline so icon aligns vertically with text
-            let iconRange = NSRange(location: 0, length: iconString.length)
-            attributed.addAttribute(.baselineOffset, value: -1.0, range: iconRange)
+        // Space + time
+        attributed.append(NSAttributedString(string: " \(time)"))
 
-            button.attributedTitle = attributed
-        } else {
-            // Idle — pad with spaces to keep time position consistent with icon states
-            let padded = NSMutableAttributedString(string: "  \(time)")
-            padded.addAttribute(.font, value: button.font ?? NSFont.monospacedDigitSystemFont(ofSize: NSFont.systemFontSize, weight: .regular), range: NSRange(location: 0, length: padded.length))
-            button.attributedTitle = padded
-        }
+        // Font for the whole string
+        let font = button.font ?? NSFont.monospacedDigitSystemFont(ofSize: NSFont.systemFontSize, weight: .regular)
+        let range = NSRange(location: 0, length: attributed.length)
+        attributed.addAttribute(.font, value: font, range: range)
+        // Nudge baseline so icon aligns vertically with text
+        let iconRange = NSRange(location: 0, length: iconString.length)
+        attributed.addAttribute(.baselineOffset, value: -1.0, range: iconRange)
+
+        button.image = nil
+        button.attributedTitle = attributed
     }
 
     private func formatTime(_ seconds: Int) -> String {
