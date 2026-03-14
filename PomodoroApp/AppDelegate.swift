@@ -59,8 +59,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         floatingPanel = panel
 
-        // Register for launch at login (zero-friction)
-        registerLaunchAtLogin()
+        // Register for launch at login (only if not already registered)
+        if SMAppService.mainApp.status == .notRegistered {
+            try? SMAppService.mainApp.register()
+        }
     }
 
     // MARK: - Status Item Title
@@ -115,14 +117,4 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    // MARK: - Launch at Login
-
-    private func registerLaunchAtLogin() {
-        guard SMAppService.mainApp.status != .enabled else { return }
-        do {
-            try SMAppService.mainApp.register()
-        } catch {
-            print("Failed to register launch at login: \(error)")
-        }
-    }
 }

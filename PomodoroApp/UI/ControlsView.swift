@@ -93,7 +93,7 @@ struct ControlsView: View {
         .frame(width: isCompact ? nil : 180)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(TokyoNight.bg.opacity(0.85))
+                .fill(TokyoNight.bg.opacity(0.75))
         )
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .animation(.easeInOut(duration: 0.2), value: isCompact)
@@ -124,44 +124,40 @@ struct StepperRow: View {
     let accentColor: Color
 
     var body: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 8) {
             Text(label)
                 .font(.system(size: 10))
                 .foregroundColor(TokyoNight.comment)
                 .frame(width: 32, alignment: .leading)
 
-            Button(action: {
+            Button {
                 value = max(range.lowerBound, value - step)
-            }) {
+            } label: {
                 Image(systemName: "minus")
-                    .font(.system(size: 9, weight: .medium))
+                    .font(.system(size: 10, weight: .bold))
+                    .frame(width: 28, height: 28)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(StepperButtonStyle())
 
-            TextField("", value: $value, formatter: NumberFormatter())
+            Text("\(value)")
                 .font(.system(size: 12, design: .monospaced))
                 .monospacedDigit()
                 .foregroundColor(TokyoNight.fg)
+                .frame(width: 28)
                 .multilineTextAlignment(.center)
-                .frame(width: 30)
-                .textFieldStyle(.plain)
-                .background(
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(Color.black.opacity(0.3))
-                )
-                .onSubmit {
-                    value = min(range.upperBound, max(range.lowerBound, value))
-                }
 
             Text("m")
                 .font(.system(size: 10))
                 .foregroundColor(TokyoNight.comment)
 
-            Button(action: {
+            Button {
                 value = min(range.upperBound, value + step)
-            }) {
+            } label: {
                 Image(systemName: "plus")
-                    .font(.system(size: 9, weight: .medium))
+                    .font(.system(size: 10, weight: .bold))
+                    .frame(width: 28, height: 28)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(StepperButtonStyle())
         }
@@ -172,11 +168,11 @@ struct StepperButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .foregroundColor(configuration.isPressed ? TokyoNight.fg : TokyoNight.comment)
-            .frame(width: 22, height: 22)
             .background(
-                RoundedRectangle(cornerRadius: 5)
-                    .stroke(TokyoNight.comment.opacity(0.3), lineWidth: 1)
+                RoundedRectangle(cornerRadius: 6)
+                    .stroke(TokyoNight.comment.opacity(configuration.isPressed ? 0.6 : 0.3), lineWidth: 1)
             )
+            .contentShape(Rectangle())
     }
 }
 

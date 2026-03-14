@@ -8,8 +8,6 @@ enum AmbientSound: String, CaseIterable, Identifiable, Sendable {
     case ocean
     case forest
     case fireplace
-    case whitenoise
-    case coffeeshop
 
     var id: String { rawValue }
 
@@ -21,8 +19,6 @@ enum AmbientSound: String, CaseIterable, Identifiable, Sendable {
         case .ocean:      return "Ocean"
         case .forest:     return "Forest"
         case .fireplace:  return "Fireplace"
-        case .whitenoise: return "White Noise"
-        case .coffeeshop: return "Coffee Shop"
         }
     }
 }

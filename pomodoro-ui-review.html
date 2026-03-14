@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pomodoro App – UI Review</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro', system-ui, sans-serif;
+    background: #0d0e17;
+    color: #a9b1d6;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
+  }
+
+  h1 {
+    font-size: 14px;
+    font-weight: 500;
+    color: #565f82;
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .subtitle {
+    font-size: 12px;
+    color: #565f82;
+    margin-bottom: 32px;
+  }
+
+  /* Desktop mock */
+  .desktop {
+    position: relative;
+    width: 900px;
+    height: 580px;
+    background: linear-gradient(135deg, #1a1b2e 0%, #13142a 50%, #1a1b2e 100%);
+    border-radius: 12px;
+    border: 1px solid #2a2b3e;
+    overflow: hidden;
+  }
+
+  /* Menu bar */
+  .menu-bar {
+    height: 28px;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(20px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 12px;
+    font-size: 13px;
+    color: #a9b1d6;
+  }
+
+  .menu-bar-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-weight: 500;
+  }
+
+  .apple-logo { font-size: 15px; }
+
+  .menu-bar-right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 12px;
+  }
+
+  .menu-bar-timer {
+    font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    background: rgba(122, 166, 245, 0.15);
+    padding: 2px 8px;
+    border-radius: 4px;
+    color: #7da6f5;
+    cursor: default;
+  }
+
+  /* Fake desktop content */
+  .desktop-content {
+    padding: 40px;
+    display: flex;
+    gap: 20px;
+    height: calc(100% - 28px);
+  }
+
+  .fake-window {
+    flex: 1;
+    background: rgba(0,0,0,0.3);
+    border-radius: 8px;
+    border: 1px solid #2a2b3e;
+    overflow: hidden;
+  }
+
+  .fake-titlebar {
+    height: 32px;
+    background: rgba(0,0,0,0.4);
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    gap: 6px;
+  }
+
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot-r { background: #f7738a; }
+  .dot-y { background: #e0c473; }
+  .dot-g { background: #73d0a5; }
+
+  .fake-content {
+    padding: 16px;
+    font-size: 11px;
+    color: #565f82;
+    line-height: 1.8;
+    font-family: 'SF Mono', monospace;
+  }
+
+  /* Floating panel */
+  .floating-panel {
+    position: absolute;
+    top: 40px;
+    right: 24px;
+    width: 180px;
+    background: #1a1b2e;
+    border-radius: 10px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.3);
+    padding: 8px;
+    z-index: 10;
+  }
+
+  /* Panel header */
+  .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2px;
+  }
+
+  .mode-label {
+    font-size: 10px;
+    color: #565f82;
+  }
+
+  .close-btn {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #565f82;
+    border: none;
+    color: #1a1b2e;
+    font-size: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    line-height: 1;
+  }
+
+  /* Timer display */
+  .timer-display {
+    text-align: center;
+    font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
+    font-size: 43px;
+    font-weight: 300;
+    color: #a9b1d6;
+    font-variant-numeric: tabular-nums;
+    padding: 4px 0 6px;
+  }
+
+  /* Control buttons */
+  .controls-row {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .ctrl-btn {
+    font-size: 12px;
+    font-weight: 500;
+    padding: 5px 10px;
+    border-radius: 6px;
+    border: none;
+    cursor: default;
+    font-family: inherit;
+  }
+
+  .btn-start {
+    color: #73d0a5;
+    background: rgba(115, 208, 165, 0.15);
+  }
+
+  .btn-pause {
+    color: #e0c473;
+    background: rgba(224, 199, 115, 0.15);
+  }
+
+  .btn-break {
+    color: #bb9af7;
+    background: rgba(187, 154, 247, 0.15);
+  }
+
+  .btn-resume {
+    color: #7da6f5;
+    background: rgba(125, 166, 245, 0.15);
+  }
+
+  .btn-stop {
+    color: #f7738a;
+    background: rgba(247, 115, 138, 0.15);
+  }
+
+  /* Divider */
+  .divider {
+    height: 1px;
+    background: #565f82;
+    opacity: 0.3;
+    margin: 6px 0;
+  }
+
+  /* Steppers */
+  .stepper-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin: 4px 0;
+  }
+
+  .stepper-label {
+    font-size: 10px;
+    color: #565f82;
+    width: 32px;
+    flex-shrink: 0;
+  }
+
+  .stepper-btn {
+    width: 22px;
+    height: 22px;
+    border-radius: 5px;
+    border: 1px solid #2a2b3e;
+    background: transparent;
+    color: #565f82;
+    font-size: 13px;
+    font-family: inherit;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    transition: all 0.15s;
+  }
+
+  .stepper-btn:hover {
+    border-color: #565f82;
+    color: #a9b1d6;
+  }
+
+  .stepper-value {
+    width: 30px;
+    text-align: center;
+    font-size: 12px;
+    font-family: 'SF Mono', monospace;
+    font-variant-numeric: tabular-nums;
+    color: #a9b1d6;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid #2a2b3e;
+    border-radius: 4px;
+    padding: 2px 0;
+    outline: none;
+  }
+
+  .stepper-value:focus {
+    border-color: #7da6f5;
+  }
+
+  .stepper-unit {
+    font-size: 10px;
+    color: #565f82;
+  }
+
+  /* Quit */
+  .quit-btn {
+    font-size: 10px;
+    color: #565f82;
+    background: none;
+    border: none;
+    cursor: default;
+    text-align: center;
+    width: 100%;
+    padding: 2px 0 0;
+    font-family: inherit;
+  }
+
+  /* State switcher */
+  .state-switcher {
+    display: flex;
+    gap: 8px;
+    margin-top: 24px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .state-btn {
+    font-size: 12px;
+    font-weight: 500;
+    padding: 6px 14px;
+    border-radius: 6px;
+    border: 1px solid #2a2b3e;
+    background: transparent;
+    color: #565f82;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+
+  .state-btn:hover { border-color: #565f82; color: #a9b1d6; }
+  .state-btn.active { border-color: #7da6f5; color: #7da6f5; background: rgba(125,166,245,0.1); }
+
+  /* Prompt output */
+  .prompt-section {
+    margin-top: 24px;
+    width: 900px;
+  }
+
+  .prompt-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .prompt-label {
+    font-size: 11px;
+    color: #565f82;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .copy-btn {
+    font-size: 11px;
+    padding: 4px 12px;
+    border-radius: 4px;
+    border: 1px solid #2a2b3e;
+    background: transparent;
+    color: #7da6f5;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+
+  .copy-btn:hover { background: rgba(125,166,245,0.1); }
+
+  .prompt-box {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid #2a2b3e;
+    border-radius: 8px;
+    padding: 16px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #a9b1d6;
+    min-height: 60px;
+    white-space: pre-wrap;
+  }
+
+  .annotation-hint {
+    font-size: 11px;
+    color: #565f82;
+    margin-top: 8px;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<h1>Pomodoro App — Current UI</h1>
+<p class="subtitle">Switch states below to see all button configurations. Take a screenshot and annotate to show changes.</p>
+
+<div class="desktop">
+  <!-- Menu bar -->
+  <div class="menu-bar">
+    <div class="menu-bar-left">
+      <span class="apple-logo"></span>
+      <span>Finder</span>
+      <span>File</span>
+      <span>Edit</span>
+      <span>View</span>
+    </div>
+    <div class="menu-bar-right">
+      <span id="menubar-timer" class="menu-bar-timer">25:00</span>
+      <span>Wi-Fi</span>
+      <span>3:42 PM</span>
+    </div>
+  </div>
+
+  <!-- Desktop with fake windows -->
+  <div class="desktop-content">
+    <div class="fake-window">
+      <div class="fake-titlebar">
+        <div class="dot dot-r"></div>
+        <div class="dot dot-y"></div>
+        <div class="dot dot-g"></div>
+      </div>
+      <div class="fake-content">
+        <div>// some-project/src/main.swift</div>
+        <div>import Foundation</div>
+        <div>&nbsp;</div>
+        <div>func doWork() {</div>
+        <div>&nbsp;&nbsp;// focus time...</div>
+        <div>}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating panel -->
+  <div class="floating-panel" id="panel">
+    <div class="panel-header">
+      <span class="mode-label" id="panel-mode"></span>
+      <button class="close-btn">&times;</button>
+    </div>
+
+    <div class="timer-display" id="panel-timer">25:00</div>
+
+    <div class="controls-row" id="panel-controls">
+      <button class="ctrl-btn btn-start">Start</button>
+      <button class="ctrl-btn btn-break">Break</button>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="stepper-row">
+      <span class="stepper-label">Focus:</span>
+      <button class="stepper-btn" onclick="adjust('work',-5)">−</button>
+      <input class="stepper-value" id="work-val" type="text" value="25" onclick="this.select()" onchange="clampInput(this,5,120)">
+      <span class="stepper-unit">m</span>
+      <button class="stepper-btn" onclick="adjust('work',5)">+</button>
+    </div>
+    <div class="stepper-row">
+      <span class="stepper-label">Break:</span>
+      <button class="stepper-btn" onclick="adjust('break',-5)">−</button>
+      <input class="stepper-value" id="break-val" type="text" value="5" onclick="this.select()" onchange="clampInput(this,5,120)">
+      <span class="stepper-unit">m</span>
+      <button class="stepper-btn" onclick="adjust('break',5)">+</button>
+    </div>
+
+    <div class="divider"></div>
+
+    <button class="quit-btn">Quit</button>
+  </div>
+</div>
+
+<!-- State switcher -->
+<div class="state-switcher">
+  <button class="state-btn active" onclick="setState('idle')">Idle</button>
+  <button class="state-btn" onclick="setState('working')">Working</button>
+  <button class="state-btn" onclick="setState('paused')">Paused</button>
+  <button class="state-btn" onclick="setState('break')">On Break</button>
+  <button class="state-btn" onclick="setState('break-resume')">Break (Resume Available)</button>
+</div>
+
+<!-- Prompt output -->
+<div class="prompt-section">
+  <div class="prompt-header">
+    <span class="prompt-label">Changes to request</span>
+    <button class="copy-btn" onclick="copyPrompt()">Copy Prompt</button>
+  </div>
+  <div class="prompt-box" id="prompt-output">Screenshot this page, annotate it with your desired changes, and paste it back into the conversation.</div>
+</div>
+
+<p class="annotation-hint">Tip: Use your OS screenshot tool (Cmd+Shift+4) or Preview to annotate, then drag the image into the chat.</p>
+
+<script>
+const states = {
+  idle: {
+    mode: '',
+    timer: '25:00',
+    menubar: '25:00',
+    buttons: ['start', 'break'],
+  },
+  working: {
+    mode: '',
+    timer: '18:42',
+    menubar: '18:42',
+    buttons: ['pause', 'break', 'stop'],
+  },
+  paused: {
+    mode: 'Paused',
+    timer: '18:42',
+    menubar: '|| 18:42',
+    buttons: ['start', 'stop'],
+  },
+  break: {
+    mode: 'Break',
+    timer: '04:31',
+    menubar: '~ 04:31',
+    buttons: ['stop'],
+  },
+  'break-resume': {
+    mode: 'Break',
+    timer: '04:31',
+    menubar: '~ 04:31',
+    buttons: ['resume', 'stop'],
+  },
+};
+
+const btnHTML = {
+  start: '<button class="ctrl-btn btn-start">Start</button>',
+  pause: '<button class="ctrl-btn btn-pause">Pause</button>',
+  break: '<button class="ctrl-btn btn-break">Break</button>',
+  resume: '<button class="ctrl-btn btn-resume">Resume</button>',
+  stop: '<button class="ctrl-btn btn-stop">Stop</button>',
+};
+
+function setState(name) {
+  const s = states[name];
+  document.getElementById('panel-mode').textContent = s.mode;
+  document.getElementById('panel-timer').textContent = s.timer;
+  document.getElementById('menubar-timer').textContent = s.menubar;
+  document.getElementById('panel-controls').innerHTML = s.buttons.map(b => btnHTML[b]).join('');
+
+  document.querySelectorAll('.state-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.textContent.toLowerCase().replace(/[() ]/g, '').includes(name.replace('-', '')));
+  });
+}
+
+function adjust(type, delta) {
+  const el = document.getElementById(type + '-val');
+  let v = parseInt(el.value) + delta;
+  v = Math.max(5, Math.min(120, v));
+  el.value = v;
+}
+
+function clampInput(el, min, max) {
+  let v = parseInt(el.value);
+  if (isNaN(v)) v = min;
+  el.value = Math.max(min, Math.min(max, v));
+}
+
+function copyPrompt() {
+  const text = document.getElementById('prompt-output').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.querySelector('.copy-btn');
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy Prompt', 1500);
+  });
+}
+</script>
+
+</body>
+</html>

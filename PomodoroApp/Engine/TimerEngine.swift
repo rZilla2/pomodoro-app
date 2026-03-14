@@ -11,7 +11,13 @@ final class TimerEngine: ObservableObject {
     @Published var currentMode: Mode = .work
     @Published var canResumeWork: Bool = false
 
-    @AppStorage("workDuration") var workDuration: Int = 25
+    @AppStorage("workDuration") var workDuration: Int = 25 {
+        didSet {
+            if timerState == .idle && currentMode == .work {
+                timeRemaining = workDuration * 60
+            }
+        }
+    }
     @AppStorage("breakDuration") var breakDuration: Int = 5
 
     unowned let audioEngine: AudioEngine
