@@ -25,7 +25,7 @@ struct ControlsView: View {
                     if timerEngine.timerState == .idle
                         || timerEngine.timerState == .paused {
                         Button { timerEngine.start() } label: {
-                            Label("Start", systemImage: "play.fill")
+                            Image(systemName: "play.fill")
                         }
                         .buttonStyle(.glassProminent)
                         .controlSize(.large)
@@ -33,7 +33,7 @@ struct ControlsView: View {
 
                     if timerEngine.timerState == .running {
                         Button { timerEngine.pause() } label: {
-                            Label("Pause", systemImage: "pause.fill")
+                            Image(systemName: "pause.fill")
                         }
                         .buttonStyle(.glassProminent)
                         .controlSize(.large)
@@ -43,7 +43,7 @@ struct ControlsView: View {
                         || (timerEngine.timerState == .running
                             && timerEngine.currentMode == .work) {
                         Button { timerEngine.startBreak() } label: {
-                            Label("Break", systemImage: "cup.and.saucer.fill")
+                            Image(systemName: "cup.and.saucer.fill")
                         }
                         .buttonStyle(.glass)
                     }
@@ -51,7 +51,7 @@ struct ControlsView: View {
                     if timerEngine.canResumeWork
                         && timerEngine.currentMode == .break_ {
                         Button { timerEngine.resumeWork() } label: {
-                            Label("Resume", systemImage: "arrow.counterclockwise")
+                            Image(systemName: "arrow.counterclockwise")
                         }
                         .buttonStyle(.glass)
                     }
@@ -60,7 +60,7 @@ struct ControlsView: View {
                         || timerEngine.timerState == .paused
                         || timerEngine.timerState == .onBreak {
                         Button { timerEngine.stop() } label: {
-                            Label("Stop", systemImage: "stop.fill")
+                            Image(systemName: "stop.fill")
                         }
                         .buttonStyle(.glass)
                     }
@@ -128,7 +128,7 @@ struct ControlsView: View {
             }
         }
         .frame(width: 200)
-        .glassEffect(.regular, in: .rect(cornerRadius: 14))
+        .background(.ultraThickMaterial, in: RoundedRectangle(cornerRadius: 14))
     }
 
     private var modeLabel: String {

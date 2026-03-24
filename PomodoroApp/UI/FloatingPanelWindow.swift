@@ -16,6 +16,7 @@ final class FloatingPanelWindow: NSPanel {
 
         titleVisibility = .hidden
         titlebarAppearsTransparent = true
+        appearance = NSAppearance(named: .darkAqua)
 
         isFloatingPanel = true
         level = .floating
