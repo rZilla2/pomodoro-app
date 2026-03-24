@@ -1,9 +1,13 @@
 import SwiftUI
 import AppKit
 
+extension Notification.Name {
+    static let workSessionComplete = Notification.Name("workSessionComplete")
+}
+
 @MainActor
 final class TimerEngine: ObservableObject {
-    enum TimerState: Sendable { case idle, running, paused, onBreak }
+    enum TimerState: Sendable { case idle, running, paused, onBreak, waitingForUser }
     enum Mode: Sendable { case work, break_ }
 
     @Published var timerState: TimerState = .idle
@@ -106,6 +110,15 @@ final class TimerEngine: ObservableObject {
         audioEngine.startAmbient()
     }
 
+    func snooze(minutes: Int) {
+        ticker?.invalidate()
+        ticker = nil
+        currentMode = .work
+        canResumeWork = false
+        targetDuration = minutes * 60
+        beginSession()
+    }
+
     func stop() {
         ticker?.invalidate()
         ticker = nil
@@ -174,13 +187,11 @@ final class TimerEngine: ObservableObject {
         NotificationCenter.default.removeObserver(self, name: NSWorkspace.didWakeNotification, object: nil)
 
         if currentMode == .work {
-            // Stop ambient FIRST, then chime — ordering critical (AUDO-04)
             audioEngine.stopAmbient()
             audioEngine.playChime()
             canResumeWork = false
-            currentMode = .break_
-            targetDuration = breakDuration * 60
-            beginSession()
+            timerState = .waitingForUser
+            NotificationCenter.default.post(name: .workSessionComplete, object: nil)
         } else {
             // Break complete — resume work if saved, otherwise idle
             if canResumeWork, savedWorkRemaining > 0 {

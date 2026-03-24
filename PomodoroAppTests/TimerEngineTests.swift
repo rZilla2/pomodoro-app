@@ -27,12 +27,42 @@ import Testing
         #expect(engine.timeRemaining == engine.workDuration * 60)
     }
 
+    @Test func workSessionWaitsForUserInsteadOfAutoBreak() async throws {
+        let engine = TimerEngine(audioEngine: AudioEngine())
+        engine.startWithDuration(seconds: 1)
+        try await Task.sleep(for: .seconds(2))
+        #expect(engine.timerState == .waitingForUser)
+        engine.stop()
+    }
+
     @Test func autoBreakTransition() async throws {
         let engine = TimerEngine(audioEngine: AudioEngine())
         engine.startWithDuration(seconds: 1)
         try await Task.sleep(for: .seconds(2))
+        #expect(engine.timerState == .waitingForUser)
+        engine.startBreak()
         #expect(engine.currentMode == .break_)
         #expect(engine.timerState == .running)
+        engine.stop()
+    }
+
+    @Test func snoozeStartsCountdownWithoutAmbient() {
+        let engine = TimerEngine(audioEngine: AudioEngine())
+        engine.snooze(minutes: 5)
+        #expect(engine.timerState == .running)
+        #expect(engine.timeRemaining == 300)
+        #expect(engine.currentMode == .work)
+        engine.stop()
+    }
+
+    @Test func dismissAfterWorkStartsBreak() async throws {
+        let engine = TimerEngine(audioEngine: AudioEngine())
+        engine.startWithDuration(seconds: 1)
+        try await Task.sleep(for: .seconds(2))
+        #expect(engine.timerState == .waitingForUser)
+        engine.startBreak()
+        #expect(engine.timerState == .running)
+        #expect(engine.currentMode == .break_)
         engine.stop()
     }
 
@@ -59,7 +89,7 @@ import Testing
         let engine = TimerEngine(audioEngine: AudioEngine())
         engine.startWithDuration(seconds: 1)
         try await Task.sleep(for: .seconds(2))
-        #expect(engine.currentMode == .break_)
+        #expect(engine.timerState == .waitingForUser)
         engine.startBreakWithDuration(seconds: 1)
         try await Task.sleep(for: .seconds(2))
         #expect(engine.timerState == .idle)

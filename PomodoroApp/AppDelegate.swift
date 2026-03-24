@@ -3,16 +3,13 @@ import Combine
 import ServiceManagement
 import SwiftUI
 
-extension Notification.Name {
-    static let hidePanelRequested = Notification.Name("hidePanelRequested")
-}
-
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     var statusItem: NSStatusItem?
     var audioEngine: AudioEngine?
     var timerEngine: TimerEngine?
     var floatingPanel: FloatingPanelWindow?
+    var notificationWindow: FullScreenNotificationWindow?
     private var cancellables = Set<AnyCancellable>()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -71,14 +68,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         floatingPanel = panel
 
-        // Listen for hide-panel requests from SwiftUI
+        // Listen for work session completion → show full-screen notification
         NotificationCenter.default.addObserver(
-            forName: .hidePanelRequested,
+            forName: .workSessionComplete,
             object: nil,
             queue: .main
         ) { [weak self] _ in
             Task { @MainActor in
-                self?.hidePanelAction()
+                self?.showFullScreenNotification()
             }
         }
 
@@ -105,6 +102,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             symbolName = "pause.fill"
         case .onBreak:
             symbolName = "cup.and.saucer.fill"
+        case .waitingForUser:
+            symbolName = "bell.fill"
         }
 
         // Pick the icon: flame when idle, state-specific otherwise
@@ -153,16 +152,34 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         floatingPanel?.orderFrontRegardless()
     }
 
-    @objc func hidePanelAction() {
-        floatingPanel?.orderOut(nil)
-    }
-
     func togglePanel() {
         if let panel = floatingPanel, panel.isVisible {
-            hidePanelAction()
+            floatingPanel?.orderOut(nil)
         } else {
             showPanel()
         }
     }
 
+    // MARK: - Full-Screen Notification
+
+    private func showFullScreenNotification() {
+        let view = FullScreenNotificationView(
+            onDismiss: { [weak self] in
+                self?.dismissNotification()
+                self?.timerEngine?.startBreak()
+            },
+            onSnooze: { [weak self] in
+                self?.dismissNotification()
+                self?.timerEngine?.snooze(minutes: 5)
+            }
+        )
+        let window = FullScreenNotificationWindow(view: view)
+        notificationWindow = window
+        window.makeKeyAndOrderFront(nil)
+    }
+
+    private func dismissNotification() {
+        notificationWindow?.orderOut(nil)
+        notificationWindow = nil
+    }
 }

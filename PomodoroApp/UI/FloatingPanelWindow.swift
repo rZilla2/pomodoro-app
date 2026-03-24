@@ -8,10 +8,14 @@ final class FloatingPanelWindow: NSPanel {
     init(timerEngine: TimerEngine, audioEngine: AudioEngine) {
         super.init(
             contentRect: NSRect(x: 0, y: 0, width: 180, height: 240),
-            styleMask: [.nonactivatingPanel],
+            styleMask: [.titled, .closable,
+                        .nonactivatingPanel, .fullSizeContentView],
             backing: .buffered,
             defer: false
         )
+
+        titleVisibility = .hidden
+        titlebarAppearsTransparent = true
 
         isFloatingPanel = true
         level = .floating

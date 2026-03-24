@@ -5,57 +5,45 @@ struct MenuBarView: View {
 
     var body: some View {
         VStack(spacing: 12) {
-            // Mode label
             Text(modeLabel)
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
 
-            // Time display
             Text(formatTime(timerEngine.timeRemaining))
-                .font(.system(size: 48, weight: .light, design: .monospaced))
+                .font(.system(size: 48, weight: .ultraLight))
+                .monospacedDigit()
+                .foregroundStyle(.primary)
+                .contentTransition(.numericText())
 
-            // Controls
             HStack(spacing: 16) {
-                if timerEngine.timerState == .idle || timerEngine.timerState == .paused {
-                    Button("Start") {
-                        timerEngine.start()
-                    }
-                    .keyboardShortcut(.defaultAction)
+                if timerEngine.timerState == .idle
+                    || timerEngine.timerState == .paused {
+                    Button("Start") { timerEngine.start() }
+                        .keyboardShortcut(.defaultAction)
                 }
-
                 if timerEngine.timerState == .running {
-                    Button("Pause") {
-                        timerEngine.pause()
-                    }
+                    Button("Pause") { timerEngine.pause() }
                 }
-
-                if timerEngine.timerState == .running || timerEngine.timerState == .paused || timerEngine.timerState == .onBreak {
-                    Button("Stop") {
-                        timerEngine.stop()
-                    }
+                if timerEngine.timerState == .running
+                    || timerEngine.timerState == .paused
+                    || timerEngine.timerState == .onBreak {
+                    Button("Stop") { timerEngine.stop() }
                 }
             }
             .controlSize(.large)
 
             Divider()
 
-            // Duration steppers
-            VStack(spacing: 8) {
-                StepperRow(
-                    label: "Focus:",
-                    value: $timerEngine.workDuration,
-                    range: 5...120,
-                    step: 5,
-                    accentColor: TokyoNight.blue
-                )
-                StepperRow(
-                    label: "Break:",
-                    value: $timerEngine.breakDuration,
-                    range: 1...30,
-                    step: 5,
-                    accentColor: TokyoNight.purple
-                )
-            }
+            Stepper(
+                "Focus: \(timerEngine.workDuration)m",
+                value: $timerEngine.workDuration,
+                in: 5...120, step: 5
+            )
+            Stepper(
+                "Break: \(timerEngine.breakDuration)m",
+                value: $timerEngine.breakDuration,
+                in: 1...30, step: 5
+            )
 
             Divider()
 
@@ -69,7 +57,7 @@ struct MenuBarView: View {
                 NSApplication.shared.terminate(nil)
             }
             .controlSize(.small)
-            .foregroundColor(.secondary)
+            .foregroundStyle(.secondary)
         }
         .padding(16)
         .frame(width: 220)
@@ -82,6 +70,7 @@ struct MenuBarView: View {
             return timerEngine.currentMode == .work ? "" : "Break"
         case .paused: return "Paused"
         case .onBreak: return "Break"
+        case .waitingForUser: return "Time's Up"
         }
     }
 
