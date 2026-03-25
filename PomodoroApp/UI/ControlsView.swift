@@ -103,7 +103,7 @@ struct ControlsView: View {
                             Image(systemName: audioEngine.isMuted
                                   ? "speaker.slash.fill"
                                   : "speaker.wave.2.fill")
-                                .font(.system(size: 12))
+                                .font(.system(size: 12, weight: .light))
                                 .foregroundStyle(audioEngine.isMuted ? .secondary : .primary)
                                 .frame(width: 20, height: 20)
                                 .contentShape(Rectangle())
@@ -265,7 +265,7 @@ private struct DurationRow: View {
     var body: some View {
         HStack(spacing: 6) {
             Text(label)
-                .font(.system(size: 12))
+                .font(.system(size: 12, weight: .light))
                 .foregroundStyle(.primary)
                 .frame(width: 38, alignment: .leading)
 
@@ -315,7 +315,7 @@ private struct DurationRow: View {
             // Duration value — only when idle
             if !isRunning {
                 Text("\(value)m")
-                    .font(.system(size: 12))
+                    .font(.system(size: 12, weight: .light))
                     .monospacedDigit()
                     .foregroundStyle(.primary)
                     .frame(minWidth: 24, alignment: .trailing)
