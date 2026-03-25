@@ -119,6 +119,35 @@ final class TimerEngine: ObservableObject {
         beginSession()
     }
 
+    /// Adjust the running timer by delta seconds. Returns false if result would be < 0.
+    func adjustTime(bySeconds delta: Int) -> Bool {
+        guard timerState == .running || timerState == .paused else { return true }
+        let newRemaining = timeRemaining + delta
+        if newRemaining <= 0 { return false }
+        targetDuration += delta
+        // Recalculate timeRemaining from the adjusted target
+        if let start = startDate {
+            let elapsed = Int(Date().timeIntervalSince(start))
+            timeRemaining = max(0, targetDuration - elapsed)
+        } else {
+            timeRemaining = newRemaining
+        }
+        return true
+    }
+
+    /// Force-adjust time even if result would end the timer
+    func forceAdjustTime(bySeconds delta: Int) {
+        guard timerState == .running || timerState == .paused else { return }
+        targetDuration += delta
+        if let start = startDate {
+            let elapsed = Int(Date().timeIntervalSince(start))
+            timeRemaining = max(0, targetDuration - elapsed)
+        }
+        if timeRemaining <= 0 {
+            handleSessionComplete()
+        }
+    }
+
     func stop() {
         ticker?.invalidate()
         ticker = nil

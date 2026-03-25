@@ -125,13 +125,17 @@ struct ControlsView: View {
                         label: "Focus",
                         value: $timerEngine.workDuration,
                         range: 5...120,
-                        step: 5
+                        step: 5,
+                        timerEngine: timerEngine,
+                        isActiveMode: timerEngine.currentMode == .work
                     )
                     DurationRow(
                         label: "Break",
                         value: $timerEngine.breakDuration,
                         range: 1...30,
-                        step: 5
+                        step: 5,
+                        timerEngine: timerEngine,
+                        isActiveMode: timerEngine.currentMode == .break_
                     )
 
                     Divider()
@@ -249,8 +253,15 @@ private struct DurationRow: View {
     @Binding var value: Int
     let range: ClosedRange<Int>
     let step: Int
+    @ObservedObject var timerEngine: TimerEngine
+    let isActiveMode: Bool
     @State private var minusHover = false
     @State private var plusHover = false
+    @State private var showUnderflowAlert = false
+
+    private var isRunning: Bool {
+        isActiveMode && (timerEngine.timerState == .running || timerEngine.timerState == .paused)
+    }
 
     var body: some View {
         HStack(spacing: 6) {
@@ -259,10 +270,9 @@ private struct DurationRow: View {
                 .foregroundStyle(.primary)
                 .frame(width: 38, alignment: .leading)
 
-            // −/+ side by side, no background, subtle hover
             HStack(spacing: 2) {
                 Button {
-                    value = max(range.lowerBound, value - step)
+                    handleMinus()
                 } label: {
                     Image(systemName: "minus")
                         .font(.system(size: 10, weight: .medium))
@@ -278,7 +288,7 @@ private struct DurationRow: View {
                 .onHover { minusHover = $0 }
 
                 Button {
-                    value = min(range.upperBound, value + step)
+                    handlePlus()
                 } label: {
                     Image(systemName: "plus")
                         .font(.system(size: 10, weight: .medium))
@@ -300,5 +310,32 @@ private struct DurationRow: View {
                 .foregroundStyle(.primary)
                 .frame(minWidth: 28, alignment: .trailing)
         }
+        .alert("Result would be less than zero", isPresented: $showUnderflowAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("OK") {
+                timerEngine.forceAdjustTime(bySeconds: -(step * 60))
+                value = max(range.lowerBound, value - step)
+            }
+        }
+    }
+
+    private func handleMinus() {
+        if isRunning {
+            let wouldSucceed = timerEngine.adjustTime(bySeconds: -(step * 60))
+            if wouldSucceed {
+                value = max(range.lowerBound, value - step)
+            } else {
+                showUnderflowAlert = true
+            }
+        } else {
+            value = max(range.lowerBound, value - step)
+        }
+    }
+
+    private func handlePlus() {
+        if isRunning {
+            _ = timerEngine.adjustTime(bySeconds: step * 60)
+        }
+        value = min(range.upperBound, value + step)
     }
 }
