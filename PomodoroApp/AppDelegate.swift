@@ -31,8 +31,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Set up status item
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         if let button = statusItem?.button {
-            button.image = NSImage(systemSymbolName: "flame", accessibilityDescription: "Pomodoro")
-            button.image?.size = NSSize(width: 14, height: 14)
+            button.image = NSImage(systemSymbolName: "timer", accessibilityDescription: "Pomodoro")
+            button.image?.size = NSSize(width: 22, height: 22)
             button.image?.isTemplate = true
             button.imagePosition = .imageLeading
             button.font = NSFont.monospacedDigitSystemFont(ofSize: NSFont.systemFontSize, weight: .regular)
@@ -118,14 +118,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         // Pick the icon: flame when idle, state-specific otherwise
-        let iconName = symbolName ?? "flame"
+        let iconName = symbolName ?? "timer"
         guard let symbolImage = NSImage(systemSymbolName: iconName, accessibilityDescription: nil) else { return }
 
         let attributed = NSMutableAttributedString()
 
         // Icon as inline attachment
         let attachment = NSTextAttachment()
-        let config = NSImage.SymbolConfiguration(pointSize: 12, weight: .medium)
+        let config = NSImage.SymbolConfiguration(pointSize: 16, weight: .medium)
         attachment.image = symbolImage.withSymbolConfiguration(config)
         let iconString = NSAttributedString(attachment: attachment)
         attributed.append(iconString)
