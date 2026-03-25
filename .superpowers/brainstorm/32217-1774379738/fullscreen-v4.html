@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Full-Screen Timer Notification v4</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .overlay {
+    position: fixed;
+    inset: 0;
+    /* Base dark purple */
+    background: #120820;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    overflow: hidden;
+  }
+
+  /* Dato-style flowing wave background using layered shapes */
+  .overlay::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      /* Top-right bright purple/magenta glow */
+      radial-gradient(ellipse 80% 60% at 85% 15%, rgba(140, 50, 200, 0.7) 0%, transparent 60%),
+      /* Center-right pink/magenta streak */
+      radial-gradient(ellipse 50% 80% at 70% 50%, rgba(180, 40, 140, 0.5) 0%, transparent 55%),
+      /* Left side deep purple */
+      radial-gradient(ellipse 70% 90% at 20% 60%, rgba(60, 20, 100, 0.8) 0%, transparent 60%),
+      /* Bottom-left dark blue */
+      radial-gradient(ellipse 80% 50% at 10% 90%, rgba(20, 10, 60, 0.9) 0%, transparent 50%),
+      /* Top-left subtle blue */
+      radial-gradient(ellipse 60% 40% at 15% 20%, rgba(40, 20, 80, 0.6) 0%, transparent 50%);
+  }
+
+  /* Flowing wave shapes */
+  .wave1 {
+    position: absolute;
+    bottom: -10%;
+    left: -20%;
+    width: 140%;
+    height: 70%;
+    background: linear-gradient(135deg, rgba(30, 10, 50, 0.9) 0%, rgba(80, 20, 120, 0.6) 40%, rgba(160, 40, 140, 0.4) 70%, transparent 100%);
+    border-radius: 50% 60% 0 0;
+    transform: rotate(-5deg);
+  }
+
+  .wave2 {
+    position: absolute;
+    bottom: -20%;
+    left: -10%;
+    width: 130%;
+    height: 55%;
+    background: linear-gradient(160deg, rgba(20, 8, 40, 0.95) 0%, rgba(50, 15, 80, 0.7) 50%, rgba(120, 30, 100, 0.3) 100%);
+    border-radius: 45% 55% 0 0;
+    transform: rotate(-3deg);
+  }
+
+  .wave3 {
+    position: absolute;
+    top: -15%;
+    right: -20%;
+    width: 80%;
+    height: 60%;
+    background: linear-gradient(200deg, rgba(120, 40, 180, 0.5) 0%, rgba(80, 20, 140, 0.3) 50%, transparent 100%);
+    border-radius: 0 0 60% 50%;
+    transform: rotate(8deg);
+  }
+
+  /* Bright diagonal streak like in the Dato screenshot */
+  .streak {
+    position: absolute;
+    bottom: 15%;
+    left: 30%;
+    width: 50%;
+    height: 3px;
+    background: linear-gradient(90deg, transparent 0%, rgba(200, 100, 220, 0.3) 30%, rgba(220, 120, 180, 0.15) 70%, transparent 100%);
+    transform: rotate(-25deg);
+    filter: blur(8px);
+  }
+
+  /* === CONTENT === */
+  .content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .icon {
+    font-size: 56px;
+    margin-bottom: 28px;
+    filter: brightness(0) invert(1);
+    opacity: 0.9;
+  }
+
+  .title {
+    font-size: 32px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.9);
+    letter-spacing: -0.5px;
+    margin-bottom: 10px;
+  }
+
+  .subtitle {
+    font-size: 16px;
+    font-weight: 400;
+    color: rgba(255,255,255,0.4);
+    margin-bottom: 44px;
+  }
+
+  .button-row {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 32px;
+  }
+
+  .btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 11px 32px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-family: inherit;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s ease;
+    min-width: 130px;
+  }
+
+  .btn.prominent {
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    color: rgba(255,255,255,0.95);
+    font-weight: 500;
+    border: 0.5px solid rgba(255,255,255,0.2);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2), inset 0 0.5px 0 rgba(255,255,255,0.1);
+  }
+
+  .btn.prominent:hover {
+    background: rgba(255,255,255,0.22);
+  }
+
+  .btn.glass {
+    background: rgba(255,255,255,0.06);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    color: rgba(255,255,255,0.55);
+    font-weight: 400;
+    border: 0.5px solid rgba(255,255,255,0.08);
+  }
+
+  .btn.glass:hover {
+    background: rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.75);
+  }
+
+  .hint {
+    font-size: 11px;
+    color: rgba(255,255,255,0.18);
+    letter-spacing: 0.3px;
+  }
+
+  .hint kbd {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.04);
+    border: 0.5px solid rgba(255,255,255,0.08);
+    font-family: inherit;
+    font-size: 10px;
+    margin: 0 2px;
+  }
+</style>
+</head>
+<body>
+
+<div class="overlay">
+  <div class="wave1"></div>
+  <div class="wave2"></div>
+  <div class="wave3"></div>
+  <div class="streak"></div>
+
+  <div class="content">
+    <div class="icon">⏱</div>
+    <div class="title">Time's Up</div>
+    <div class="subtitle">Your focus session has ended.</div>
+
+    <div class="button-row">
+      <button class="btn prominent">Snooze 5m</button>
+      <button class="btn glass">Dismiss</button>
+    </div>
+
+    <div class="hint">
+      <kbd>Return</kbd> to snooze &nbsp;·&nbsp; <kbd>Esc</kbd> to dismiss
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

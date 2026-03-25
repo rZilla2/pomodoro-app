@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Full-Screen Timer Notification — Final</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .overlay {
+    position: fixed;
+    inset: 0;
+    /* Monterey Dark wallpaper as background */
+    background: url('/tmp/monterey-dark.png') center center / cover no-repeat;
+    background-color: #0f0a1a;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+  }
+
+  .icon {
+    font-size: 56px;
+    margin-bottom: 28px;
+    filter: brightness(0) invert(1);
+    opacity: 0.9;
+  }
+
+  .title {
+    font-size: 32px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.9);
+    letter-spacing: -0.5px;
+    margin-bottom: 10px;
+  }
+
+  .subtitle {
+    font-size: 16px;
+    font-weight: 400;
+    color: rgba(255,255,255,0.45);
+    margin-bottom: 44px;
+  }
+
+  .button-row {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 32px;
+  }
+
+  .btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 11px 32px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-family: inherit;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s ease;
+    min-width: 130px;
+  }
+
+  .btn.prominent {
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    color: rgba(255,255,255,0.95);
+    font-weight: 500;
+    border: 0.5px solid rgba(255,255,255,0.2);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2), inset 0 0.5px 0 rgba(255,255,255,0.1);
+  }
+
+  .btn.prominent:hover {
+    background: rgba(255,255,255,0.22);
+  }
+
+  .btn.glass {
+    background: rgba(255,255,255,0.06);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    color: rgba(255,255,255,0.55);
+    font-weight: 400;
+    border: 0.5px solid rgba(255,255,255,0.08);
+  }
+
+  .btn.glass:hover {
+    background: rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.75);
+  }
+
+  .hint {
+    font-size: 11px;
+    color: rgba(255,255,255,0.2);
+    letter-spacing: 0.3px;
+  }
+
+  .hint kbd {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.05);
+    border: 0.5px solid rgba(255,255,255,0.08);
+    font-family: inherit;
+    font-size: 10px;
+    margin: 0 2px;
+  }
+</style>
+</head>
+<body>
+
+<div class="overlay">
+  <div class="icon">⏱</div>
+  <div class="title">Time's Up</div>
+  <div class="subtitle">Your focus session has ended.</div>
+
+  <div class="button-row">
+    <button class="btn prominent">Snooze 5m</button>
+    <button class="btn glass">Dismiss</button>
+  </div>
+
+  <div class="hint">
+    <kbd>Return</kbd> to snooze &nbsp;·&nbsp; <kbd>Esc</kbd> to dismiss
+  </div>
+</div>
+
+</body>
+</html>

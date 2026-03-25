@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Full-Screen Timer Notification v2</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* === FULL-SCREEN OVERLAY — Dato purple === */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(160deg, #1a1025 0%, #1e1230 25%, #261540 50%, #1a1035 75%, #120a20 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    z-index: 9999;
+  }
+
+  /* === CONTENT — no card, just centered elements === */
+  .icon {
+    font-size: 56px;
+    margin-bottom: 28px;
+  }
+
+  .title {
+    font-size: 32px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.9);
+    letter-spacing: -0.5px;
+    margin-bottom: 10px;
+  }
+
+  .subtitle {
+    font-size: 16px;
+    font-weight: 400;
+    color: rgba(255,255,255,0.4);
+    margin-bottom: 44px;
+  }
+
+  /* === BUTTONS === */
+  .button-row {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 32px;
+  }
+
+  .btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 11px 32px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-family: inherit;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s ease;
+    min-width: 130px;
+  }
+
+  /* Snooze — .glassProminent */
+  .btn.prominent {
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    color: rgba(255,255,255,0.95);
+    font-weight: 500;
+    border: 0.5px solid rgba(255,255,255,0.2);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2), inset 0 0.5px 0 rgba(255,255,255,0.1);
+  }
+
+  .btn.prominent:hover {
+    background: rgba(255,255,255,0.22);
+  }
+
+  /* Dismiss — .glass */
+  .btn.glass {
+    background: rgba(255,255,255,0.06);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    color: rgba(255,255,255,0.55);
+    font-weight: 400;
+    border: 0.5px solid rgba(255,255,255,0.08);
+  }
+
+  .btn.glass:hover {
+    background: rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.75);
+  }
+
+  /* Keyboard hint */
+  .hint {
+    font-size: 11px;
+    color: rgba(255,255,255,0.18);
+    letter-spacing: 0.3px;
+  }
+
+  .hint kbd {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.04);
+    border: 0.5px solid rgba(255,255,255,0.08);
+    font-family: inherit;
+    font-size: 10px;
+    margin: 0 2px;
+  }
+</style>
+</head>
+<body>
+
+<div class="overlay">
+  <div class="icon">⏱</div>
+  <div class="title">Time's Up</div>
+  <div class="subtitle">Your focus session has ended.</div>
+
+  <div class="button-row">
+    <button class="btn prominent">Snooze 5m</button>
+    <button class="btn glass">Dismiss</button>
+  </div>
+
+  <div class="hint">
+    <kbd>Return</kbd> to snooze &nbsp;·&nbsp; <kbd>Esc</kbd> to dismiss
+  </div>
+</div>
+
+</body>
+</html>

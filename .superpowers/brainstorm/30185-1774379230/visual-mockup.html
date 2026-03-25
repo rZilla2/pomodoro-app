@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pomodoro — Native macOS Liquid Glass Mockup</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    /* macOS Sequoia-style wallpaper */
+    background: linear-gradient(135deg, #1a1a3e 0%, #0d1b3e 25%, #162447 50%, #1f4068 75%, #1a3a5c 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 60px 40px;
+    gap: 48px;
+    flex-wrap: wrap;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif;
+    color: rgba(255,255,255,0.85);
+  }
+
+  h1 {
+    width: 100%;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 400;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: -20px;
+    letter-spacing: 0.5px;
+  }
+
+  .state-label {
+    text-align: center;
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.4);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 12px;
+  }
+
+  /* === PANEL CONTAINER === */
+  .panel {
+    width: 220px;
+    border-radius: 14px;
+    overflow: hidden;
+    position: relative;
+
+    /* Liquid Glass effect */
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(50px) saturate(1.8) brightness(1.1);
+    -webkit-backdrop-filter: blur(50px) saturate(1.8) brightness(1.1);
+    border: 0.5px solid rgba(255,255,255,0.18);
+    box-shadow:
+      0 0 0 0.5px rgba(255,255,255,0.05),
+      0 12px 40px rgba(0,0,0,0.35),
+      0 2px 8px rgba(0,0,0,0.2),
+      inset 0 1px 0 rgba(255,255,255,0.12),
+      inset 0 -0.5px 0 rgba(255,255,255,0.05);
+  }
+
+  /* Specular highlight overlay */
+  .panel::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 45%;
+    background: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, transparent 100%);
+    pointer-events: none;
+    border-radius: 14px 14px 0 0;
+  }
+
+  /* === TRAFFIC LIGHT TITLE BAR === */
+  .titlebar {
+    display: flex;
+    align-items: center;
+    padding: 12px 14px 0;
+    gap: 7px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .traffic-light {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    position: relative;
+    box-shadow: inset 0 0.5px 1px rgba(255,255,255,0.15);
+  }
+
+  .traffic-light.close {
+    background: radial-gradient(circle at 30% 30%, #ff6b6b, #ff5f57 50%, #e5453b);
+    border: 0.5px solid rgba(180,50,40,0.4);
+  }
+
+  .traffic-light.minimize {
+    background: radial-gradient(circle at 30% 30%, #ffce44, #febc2e 50%, #d9a01e);
+    border: 0.5px solid rgba(180,140,20,0.4);
+  }
+
+  .traffic-light.zoom {
+    background: radial-gradient(circle at 30% 30%, #4dda5e, #28c840 50%, #1fad34);
+    border: 0.5px solid rgba(30,140,40,0.4);
+  }
+
+  /* === TIMER === */
+  .timer {
+    text-align: center;
+    padding: 14px 20px 10px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .timer .mode {
+    font-size: 12px;
+    font-weight: 400;
+    color: rgba(255,255,255,0.45);
+    margin-bottom: 2px;
+    min-height: 18px;
+  }
+
+  .timer .countdown {
+    font-size: 52px;
+    font-weight: 200;
+    letter-spacing: -2px;
+    color: rgba(255,255,255,0.9);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+
+  /* === BUTTONS === */
+  .buttons {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    padding: 6px 20px 8px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 7px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 400;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s ease;
+    font-family: inherit;
+  }
+
+  .btn .icon {
+    font-size: 11px;
+  }
+
+  /* .glassProminent */
+  .btn.prominent {
+    background: rgba(255,255,255,0.2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: rgba(255,255,255,0.95);
+    font-weight: 500;
+    border: 0.5px solid rgba(255,255,255,0.25);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15), inset 0 0.5px 0 rgba(255,255,255,0.12);
+  }
+
+  .btn.prominent:hover {
+    background: rgba(255,255,255,0.28);
+  }
+
+  /* .glass */
+  .btn.glass {
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: rgba(255,255,255,0.7);
+    border: 0.5px solid rgba(255,255,255,0.12);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  }
+
+  .btn.glass:hover {
+    background: rgba(255,255,255,0.14);
+    color: rgba(255,255,255,0.85);
+  }
+
+  /* === CHEVRON TOGGLE === */
+  .chevron-toggle {
+    text-align: center;
+    padding: 2px 0 6px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .chevron-toggle span {
+    color: rgba(255,255,255,0.2);
+    font-size: 10px;
+    cursor: pointer;
+  }
+
+  /* === DIVIDER === */
+  .divider {
+    height: 0.5px;
+    background: rgba(255,255,255,0.1);
+    margin: 0 16px;
+  }
+
+  /* === TRAY === */
+  .tray {
+    padding: 10px 18px 16px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .tray-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  .tray-label {
+    font-size: 12px;
+    color: rgba(255,255,255,0.55);
+  }
+
+  /* Native picker mockup */
+  .native-picker {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 6px;
+    border: 0.5px solid rgba(255,255,255,0.1);
+    font-size: 12px;
+    color: rgba(255,255,255,0.75);
+    cursor: pointer;
+  }
+
+  .native-picker .chevron {
+    font-size: 8px;
+    color: rgba(255,255,255,0.35);
+  }
+
+  /* Native stepper mockup */
+  .native-stepper {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    background: rgba(255,255,255,0.06);
+    border-radius: 6px;
+    border: 0.5px solid rgba(255,255,255,0.1);
+    overflow: hidden;
+  }
+
+  .stepper-btn {
+    padding: 4px 10px;
+    color: rgba(255,255,255,0.5);
+    font-size: 13px;
+    cursor: pointer;
+    border: none;
+    background: none;
+    font-family: inherit;
+    transition: background 0.1s;
+  }
+
+  .stepper-btn:hover {
+    background: rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.8);
+  }
+
+  .stepper-divider {
+    width: 0.5px;
+    height: 18px;
+    background: rgba(255,255,255,0.1);
+  }
+
+  /* Quit link */
+  .quit {
+    text-align: center;
+    padding-top: 4px;
+  }
+
+  .quit span {
+    font-size: 11px;
+    color: rgba(255,255,255,0.35);
+    cursor: pointer;
+  }
+
+  .quit span:hover {
+    color: rgba(255,255,255,0.6);
+  }
+
+  /* Column wrapper */
+  .column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+</style>
+</head>
+<body>
+
+<h1>Pomodoro — Native macOS Liquid Glass</h1>
+
+<!-- IDLE STATE -->
+<div class="column">
+  <div class="state-label">Idle</div>
+  <div class="panel">
+    <div class="titlebar">
+      <div class="traffic-light close"></div>
+      <div class="traffic-light minimize"></div>
+      <div class="traffic-light zoom"></div>
+    </div>
+    <div class="timer">
+      <div class="mode"></div>
+      <div class="countdown">25:00</div>
+    </div>
+    <div class="buttons">
+      <button class="btn prominent"><span class="icon">▶</span> Start</button>
+      <button class="btn glass"><span class="icon">☕</span> Break</button>
+    </div>
+    <div class="chevron-toggle"><span>▾</span></div>
+  </div>
+</div>
+
+<!-- RUNNING STATE -->
+<div class="column">
+  <div class="state-label">Running</div>
+  <div class="panel">
+    <div class="titlebar">
+      <div class="traffic-light close"></div>
+      <div class="traffic-light minimize"></div>
+      <div class="traffic-light zoom"></div>
+    </div>
+    <div class="timer">
+      <div class="mode"></div>
+      <div class="countdown">18:42</div>
+    </div>
+    <div class="buttons">
+      <button class="btn prominent"><span class="icon">⏸</span> Pause</button>
+      <button class="btn glass"><span class="icon">■</span> Stop</button>
+    </div>
+    <div class="chevron-toggle"><span>▾</span></div>
+  </div>
+</div>
+
+<!-- ON BREAK -->
+<div class="column">
+  <div class="state-label">Break</div>
+  <div class="panel">
+    <div class="titlebar">
+      <div class="traffic-light close"></div>
+      <div class="traffic-light minimize"></div>
+      <div class="traffic-light zoom"></div>
+    </div>
+    <div class="timer">
+      <div class="mode">Break</div>
+      <div class="countdown">04:15</div>
+    </div>
+    <div class="buttons">
+      <button class="btn prominent"><span class="icon">↺</span> Resume</button>
+      <button class="btn glass"><span class="icon">■</span> Stop</button>
+    </div>
+    <div class="chevron-toggle"><span>▾</span></div>
+  </div>
+</div>
+
+<!-- TRAY EXPANDED -->
+<div class="column">
+  <div class="state-label">Tray Open</div>
+  <div class="panel">
+    <div class="titlebar">
+      <div class="traffic-light close"></div>
+      <div class="traffic-light minimize"></div>
+      <div class="traffic-light zoom"></div>
+    </div>
+    <div class="timer">
+      <div class="mode"></div>
+      <div class="countdown">25:00</div>
+    </div>
+    <div class="buttons">
+      <button class="btn prominent"><span class="icon">▶</span> Start</button>
+      <button class="btn glass"><span class="icon">☕</span> Break</button>
+    </div>
+    <div class="chevron-toggle"><span>▴</span></div>
+    <div class="divider"></div>
+    <div class="tray">
+      <!-- Sound picker -->
+      <div class="tray-row">
+        <span class="tray-label">🔊 Sound</span>
+        <div class="native-picker">Rain <span class="chevron">▾</span></div>
+      </div>
+
+      <!-- Focus stepper -->
+      <div class="tray-row">
+        <span class="tray-label">Focus</span>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 13px; color: rgba(255,255,255,0.8); font-variant-numeric: tabular-nums; min-width: 30px; text-align: right;">25m</span>
+          <div class="native-stepper">
+            <button class="stepper-btn">−</button>
+            <div class="stepper-divider"></div>
+            <button class="stepper-btn">+</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Break stepper -->
+      <div class="tray-row">
+        <span class="tray-label">Break</span>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 13px; color: rgba(255,255,255,0.8); font-variant-numeric: tabular-nums; min-width: 30px; text-align: right;">5m</span>
+          <div class="native-stepper">
+            <button class="stepper-btn">−</button>
+            <div class="stepper-divider"></div>
+            <button class="stepper-btn">+</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="divider" style="margin: 8px 0;"></div>
+
+      <div class="quit"><span>⏻ Quit</span></div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

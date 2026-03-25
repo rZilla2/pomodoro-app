@@ -1,0 +1,387 @@
+<h2>Liquid Glass Pomodoro — Native macOS 26</h2>
+<p class="subtitle">Floating panel with glassEffect, native button styles, and traffic light window controls</p>
+
+<div class="cards">
+  <!-- IDLE STATE -->
+  <div class="card" data-choice="idle" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+        padding: 40px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 320px;
+      ">
+        <!-- Floating panel -->
+        <div style="
+          width: 200px;
+          background: rgba(255,255,255,0.12);
+          backdrop-filter: blur(40px) saturate(1.8);
+          -webkit-backdrop-filter: blur(40px) saturate(1.8);
+          border-radius: 14px;
+          border: 0.5px solid rgba(255,255,255,0.2);
+          box-shadow:
+            0 0 0 0.5px rgba(255,255,255,0.05),
+            0 8px 32px rgba(0,0,0,0.3),
+            inset 0 1px 0 rgba(255,255,255,0.15),
+            inset 0 -1px 0 rgba(255,255,255,0.05);
+          overflow: hidden;
+          position: relative;
+        ">
+          <!-- Specular highlight -->
+          <div style="
+            position: absolute; top: 0; left: 0; right: 0; height: 50%;
+            background: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, transparent 100%);
+            pointer-events: none;
+            border-radius: 14px 14px 0 0;
+          "></div>
+
+          <!-- Title bar with traffic lights -->
+          <div style="
+            display: flex;
+            align-items: center;
+            padding: 10px 12px 0 12px;
+            gap: 6px;
+          ">
+            <div style="width: 10px; height: 10px; border-radius: 50%; background: #ff5f57; border: 0.5px solid rgba(0,0,0,0.15); box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);"></div>
+            <div style="width: 10px; height: 10px; border-radius: 50%; background: #febc2e; border: 0.5px solid rgba(0,0,0,0.15); box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);"></div>
+            <div style="width: 10px; height: 10px; border-radius: 50%; background: #28c840; border: 0.5px solid rgba(0,0,0,0.15); box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);"></div>
+          </div>
+
+          <!-- Timer content -->
+          <div style="padding: 12px 18px 8px; text-align: center;">
+            <div style="
+              font-family: -apple-system, 'SF Pro Display', system-ui;
+              font-size: 48px;
+              font-weight: 200;
+              color: rgba(255,255,255,0.9);
+              letter-spacing: -1.5px;
+              font-feature-settings: 'tnum';
+              line-height: 1;
+            ">25:00</div>
+          </div>
+
+          <!-- Glass buttons -->
+          <div style="display: flex; gap: 8px; justify-content: center; padding: 4px 18px 14px;">
+            <!-- Start button — glass prominent -->
+            <div style="
+              padding: 6px 20px;
+              background: rgba(255,255,255,0.18);
+              backdrop-filter: blur(10px);
+              -webkit-backdrop-filter: blur(10px);
+              border-radius: 8px;
+              border: 0.5px solid rgba(255,255,255,0.25);
+              color: rgba(255,255,255,0.9);
+              font-family: -apple-system, system-ui;
+              font-size: 13px;
+              font-weight: 500;
+              box-shadow: 0 1px 3px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.1);
+              cursor: pointer;
+              display: flex; align-items: center; gap: 5px;
+            ">▶ Start</div>
+
+            <!-- Break button — glass -->
+            <div style="
+              padding: 6px 14px;
+              background: rgba(255,255,255,0.08);
+              backdrop-filter: blur(10px);
+              -webkit-backdrop-filter: blur(10px);
+              border-radius: 8px;
+              border: 0.5px solid rgba(255,255,255,0.12);
+              color: rgba(255,255,255,0.6);
+              font-family: -apple-system, system-ui;
+              font-size: 13px;
+              font-weight: 400;
+              box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+              cursor: pointer;
+              display: flex; align-items: center; gap: 5px;
+            ">☕ Break</div>
+          </div>
+
+          <!-- Tray toggle -->
+          <div style="text-align: center; padding-bottom: 10px;">
+            <span style="color: rgba(255,255,255,0.25); font-size: 9px;">▾</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>Idle State</h3>
+      <p>Clean, minimal. Glass prominent "Start" button, glass "Break" button. Traffic lights for close/minimize/hide.</p>
+    </div>
+  </div>
+
+  <!-- RUNNING STATE -->
+  <div class="card" data-choice="running" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+        padding: 40px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 320px;
+      ">
+        <div style="
+          width: 200px;
+          background: rgba(255,255,255,0.12);
+          backdrop-filter: blur(40px) saturate(1.8);
+          -webkit-backdrop-filter: blur(40px) saturate(1.8);
+          border-radius: 14px;
+          border: 0.5px solid rgba(255,255,255,0.2);
+          box-shadow:
+            0 0 0 0.5px rgba(255,255,255,0.05),
+            0 8px 32px rgba(0,0,0,0.3),
+            inset 0 1px 0 rgba(255,255,255,0.15),
+            inset 0 -1px 0 rgba(255,255,255,0.05);
+          overflow: hidden;
+          position: relative;
+        ">
+          <div style="
+            position: absolute; top: 0; left: 0; right: 0; height: 50%;
+            background: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, transparent 100%);
+            pointer-events: none;
+            border-radius: 14px 14px 0 0;
+          "></div>
+
+          <!-- Traffic lights -->
+          <div style="display: flex; align-items: center; padding: 10px 12px 0 12px; gap: 6px;">
+            <div style="width: 10px; height: 10px; border-radius: 50%; background: #ff5f57; border: 0.5px solid rgba(0,0,0,0.15); box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);"></div>
+            <div style="width: 10px; height: 10px; border-radius: 50%; background: #febc2e; border: 0.5px solid rgba(0,0,0,0.15); box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);"></div>
+            <div style="width: 10px; height: 10px; border-radius: 50%; background: #28c840; border: 0.5px solid rgba(0,0,0,0.15); box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);"></div>
+          </div>
+
+          <!-- Timer -->
+          <div style="padding: 12px 18px 8px; text-align: center;">
+            <div style="
+              font-family: -apple-system, 'SF Pro Display', system-ui;
+              font-size: 48px;
+              font-weight: 200;
+              color: rgba(255,255,255,0.9);
+              letter-spacing: -1.5px;
+              font-feature-settings: 'tnum';
+              line-height: 1;
+            ">18:42</div>
+          </div>
+
+          <!-- Running buttons -->
+          <div style="display: flex; gap: 8px; justify-content: center; padding: 4px 18px 14px;">
+            <div style="
+              padding: 6px 16px;
+              background: rgba(255,255,255,0.18);
+              border-radius: 8px;
+              border: 0.5px solid rgba(255,255,255,0.25);
+              color: rgba(255,255,255,0.9);
+              font-family: -apple-system, system-ui;
+              font-size: 13px; font-weight: 500;
+              box-shadow: 0 1px 3px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.1);
+              cursor: pointer;
+              display: flex; align-items: center; gap: 5px;
+            ">⏸ Pause</div>
+
+            <div style="
+              padding: 6px 14px;
+              background: rgba(255,255,255,0.08);
+              border-radius: 8px;
+              border: 0.5px solid rgba(255,255,255,0.12);
+              color: rgba(255,255,255,0.6);
+              font-family: -apple-system, system-ui;
+              font-size: 13px; font-weight: 400;
+              box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+              cursor: pointer;
+              display: flex; align-items: center; gap: 5px;
+            ">■ Stop</div>
+          </div>
+
+          <div style="text-align: center; padding-bottom: 10px;">
+            <span style="color: rgba(255,255,255,0.25); font-size: 9px;">▾</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>Running State</h3>
+      <p>Prominent "Pause", secondary "Stop". Timer counts down. Same glass treatment, buttons shift to active controls.</p>
+    </div>
+  </div>
+
+  <!-- TRAY EXPANDED -->
+  <div class="card" data-choice="tray" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+        padding: 30px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 320px;
+      ">
+        <div style="
+          width: 200px;
+          background: rgba(255,255,255,0.12);
+          backdrop-filter: blur(40px) saturate(1.8);
+          -webkit-backdrop-filter: blur(40px) saturate(1.8);
+          border-radius: 14px;
+          border: 0.5px solid rgba(255,255,255,0.2);
+          box-shadow:
+            0 0 0 0.5px rgba(255,255,255,0.05),
+            0 8px 32px rgba(0,0,0,0.3),
+            inset 0 1px 0 rgba(255,255,255,0.15),
+            inset 0 -1px 0 rgba(255,255,255,0.05);
+          overflow: hidden;
+          position: relative;
+        ">
+          <div style="
+            position: absolute; top: 0; left: 0; right: 0; height: 40%;
+            background: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, transparent 100%);
+            pointer-events: none;
+            border-radius: 14px 14px 0 0;
+          "></div>
+
+          <!-- Traffic lights -->
+          <div style="display: flex; align-items: center; padding: 10px 12px 0 12px; gap: 6px;">
+            <div style="width: 10px; height: 10px; border-radius: 50%; background: #ff5f57; border: 0.5px solid rgba(0,0,0,0.15); box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);"></div>
+            <div style="width: 10px; height: 10px; border-radius: 50%; background: #febc2e; border: 0.5px solid rgba(0,0,0,0.15); box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);"></div>
+            <div style="width: 10px; height: 10px; border-radius: 50%; background: #28c840; border: 0.5px solid rgba(0,0,0,0.15); box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);"></div>
+          </div>
+
+          <!-- Timer -->
+          <div style="padding: 12px 18px 6px; text-align: center;">
+            <div style="
+              font-family: -apple-system, 'SF Pro Display', system-ui;
+              font-size: 48px;
+              font-weight: 200;
+              color: rgba(255,255,255,0.9);
+              letter-spacing: -1.5px;
+              font-feature-settings: 'tnum';
+              line-height: 1;
+            ">25:00</div>
+          </div>
+
+          <!-- Buttons -->
+          <div style="display: flex; gap: 8px; justify-content: center; padding: 4px 18px 10px;">
+            <div style="
+              padding: 6px 20px;
+              background: rgba(255,255,255,0.18);
+              border-radius: 8px;
+              border: 0.5px solid rgba(255,255,255,0.25);
+              color: rgba(255,255,255,0.9);
+              font-family: -apple-system, system-ui;
+              font-size: 13px; font-weight: 500;
+              box-shadow: 0 1px 3px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.1);
+            ">▶ Start</div>
+            <div style="
+              padding: 6px 14px;
+              background: rgba(255,255,255,0.08);
+              border-radius: 8px;
+              border: 0.5px solid rgba(255,255,255,0.12);
+              color: rgba(255,255,255,0.6);
+              font-family: -apple-system, system-ui;
+              font-size: 13px;
+            ">☕ Break</div>
+          </div>
+
+          <!-- Collapse chevron -->
+          <div style="text-align: center; padding-bottom: 4px;">
+            <span style="color: rgba(255,255,255,0.25); font-size: 9px;">▴</span>
+          </div>
+
+          <!-- Divider -->
+          <div style="height: 0.5px; background: rgba(255,255,255,0.1); margin: 0 16px;"></div>
+
+          <!-- Tray content -->
+          <div style="padding: 10px 16px 14px;">
+            <!-- Sound picker -->
+            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 10px;">
+              <span style="color: rgba(255,255,255,0.45); font-size: 11px;">🔊</span>
+              <div style="
+                padding: 3px 10px;
+                background: rgba(255,255,255,0.08);
+                border-radius: 6px;
+                border: 0.5px solid rgba(255,255,255,0.1);
+                color: rgba(255,255,255,0.7);
+                font-family: -apple-system, system-ui;
+                font-size: 11px;
+                display: flex; align-items: center; gap: 4px;
+              ">Rain <span style="font-size: 7px; color: rgba(255,255,255,0.35);">▾</span></div>
+            </div>
+
+            <!-- Duration steppers -->
+            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
+              <span style="color: rgba(255,255,255,0.45); font-size: 11px; width: 36px;">Focus:</span>
+              <div style="
+                display: flex; align-items: center; gap: 0;
+                background: rgba(255,255,255,0.08);
+                border-radius: 6px;
+                border: 0.5px solid rgba(255,255,255,0.1);
+                overflow: hidden;
+              ">
+                <div style="padding: 3px 8px; color: rgba(255,255,255,0.6); font-size: 11px; border-right: 0.5px solid rgba(255,255,255,0.1);">−</div>
+                <div style="padding: 3px 10px; color: rgba(255,255,255,0.85); font-size: 12px; font-family: -apple-system, system-ui; font-feature-settings: 'tnum'; min-width: 28px; text-align: center;">25m</div>
+                <div style="padding: 3px 8px; color: rgba(255,255,255,0.6); font-size: 11px; border-left: 0.5px solid rgba(255,255,255,0.1);">+</div>
+              </div>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 10px;">
+              <span style="color: rgba(255,255,255,0.45); font-size: 11px; width: 36px;">Break:</span>
+              <div style="
+                display: flex; align-items: center; gap: 0;
+                background: rgba(255,255,255,0.08);
+                border-radius: 6px;
+                border: 0.5px solid rgba(255,255,255,0.1);
+                overflow: hidden;
+              ">
+                <div style="padding: 3px 8px; color: rgba(255,255,255,0.6); font-size: 11px; border-right: 0.5px solid rgba(255,255,255,0.1);">−</div>
+                <div style="padding: 3px 10px; color: rgba(255,255,255,0.85); font-size: 12px; font-family: -apple-system, system-ui; font-feature-settings: 'tnum'; min-width: 28px; text-align: center;">5m</div>
+                <div style="padding: 3px 8px; color: rgba(255,255,255,0.6); font-size: 11px; border-left: 0.5px solid rgba(255,255,255,0.1);">+</div>
+              </div>
+            </div>
+
+            <!-- Divider -->
+            <div style="height: 0.5px; background: rgba(255,255,255,0.1); margin-bottom: 8px;"></div>
+
+            <!-- Quit -->
+            <div style="text-align: center;">
+              <span style="color: rgba(255,255,255,0.4); font-size: 11px; font-family: -apple-system, system-ui;">⏻ Quit</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>Tray Expanded</h3>
+      <p>Settings tray with native segmented stepper controls, glass menu picker for sounds, and quit action. All system font, all glass materials.</p>
+    </div>
+  </div>
+</div>
+
+<h2 style="margin-top: 36px;">SwiftUI Implementation Summary</h2>
+<div class="section">
+  <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+    <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+      <td style="padding: 8px; color: rgba(255,255,255,0.5);">Panel background</td>
+      <td style="padding: 8px; font-family: monospace; color: rgba(255,255,255,0.8);">.glassEffect(.regular, in: .rect(cornerRadius: 14))</td>
+    </tr>
+    <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+      <td style="padding: 8px; color: rgba(255,255,255,0.5);">Primary button</td>
+      <td style="padding: 8px; font-family: monospace; color: rgba(255,255,255,0.8);">.buttonStyle(.glassProminent)</td>
+    </tr>
+    <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+      <td style="padding: 8px; color: rgba(255,255,255,0.5);">Secondary button</td>
+      <td style="padding: 8px; font-family: monospace; color: rgba(255,255,255,0.8);">.buttonStyle(.glass)</td>
+    </tr>
+    <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+      <td style="padding: 8px; color: rgba(255,255,255,0.5);">Timer font</td>
+      <td style="padding: 8px; font-family: monospace; color: rgba(255,255,255,0.8);">.font(.system(size: 48, weight: .ultraLight, design: .default))</td>
+    </tr>
+    <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+      <td style="padding: 8px; color: rgba(255,255,255,0.5);">Window controls</td>
+      <td style="padding: 8px; font-family: monospace; color: rgba(255,255,255,0.8);">NSPanel with .titled + .closable + .miniaturizable</td>
+    </tr>
+    <tr>
+      <td style="padding: 8px; color: rgba(255,255,255,0.5);">Labels</td>
+      <td style="padding: 8px; font-family: monospace; color: rgba(255,255,255,0.8);">.foregroundStyle(.secondary) / .tertiary</td>
+    </tr>
+  </table>
+</div>

@@ -38,7 +38,7 @@ struct FullScreenNotificationView: View {
                         .foregroundStyle(.white.opacity(0.45))
                         .padding(.bottom, 44)
 
-                    HStack(spacing: 14) {
+                    GlassEffectContainer(spacing: 14) {
                         Button { onSnooze() } label: {
                             Text("Snooze 5m")
                                 .frame(minWidth: 120)

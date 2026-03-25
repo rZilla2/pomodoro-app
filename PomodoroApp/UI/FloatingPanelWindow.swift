@@ -8,14 +8,11 @@ final class FloatingPanelWindow: NSPanel {
     init(timerEngine: TimerEngine, audioEngine: AudioEngine) {
         super.init(
             contentRect: NSRect(x: 0, y: 0, width: 180, height: 240),
-            styleMask: [.titled, .closable,
-                        .nonactivatingPanel, .fullSizeContentView],
+            styleMask: [.nonactivatingPanel],
             backing: .buffered,
             defer: false
         )
 
-        titleVisibility = .hidden
-        titlebarAppearsTransparent = true
         appearance = NSAppearance(named: .darkAqua)
 
         isFloatingPanel = true
@@ -29,6 +26,8 @@ final class FloatingPanelWindow: NSPanel {
 
         let hosting = NSHostingView(rootView: ControlsView(timerEngine: timerEngine, audioEngine: audioEngine))
         hosting.setFrameSize(hosting.fittingSize)
+        hosting.wantsLayer = true
+        hosting.layer?.backgroundColor = .clear
         contentView = hosting
         setContentSize(hosting.fittingSize)
         hostingView = hosting
@@ -37,7 +36,7 @@ final class FloatingPanelWindow: NSPanel {
 
     // Allow clicks on buttons inside the panel
     override var canBecomeKey: Bool { true }
-    override var canBecomeMain: Bool { false }
+    override var canBecomeMain: Bool { true }
 
     // Prevent the panel from hiding when it resigns key
     override func resignKey() {

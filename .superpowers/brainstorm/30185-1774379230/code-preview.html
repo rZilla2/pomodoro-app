@@ -1,0 +1,361 @@
+<h2>Liquid Glass Restyle — Code Preview</h2>
+<p class="subtitle">Exact SwiftUI code for each file. Click sections to approve.</p>
+
+<div class="options" data-multiselect>
+
+  <div class="option" data-choice="panel" onclick="toggleSelect(this)">
+    <div class="letter">1</div>
+    <div class="content">
+      <h3>FloatingPanelWindow.swift — Traffic Lights + Glass</h3>
+      <pre style="background: rgba(255,255,255,0.06); padding: 12px; border-radius: 8px; font-size: 11px; color: rgba(255,255,255,0.85); overflow-x: auto; margin: 8px 0; line-height: 1.5;">
+import AppKit
+import SwiftUI
+
+@MainActor
+final class FloatingPanelWindow: NSPanel {
+    private var hostingView: NSHostingView&lt;ControlsView&gt;?
+
+    init(timerEngine: TimerEngine, audioEngine: AudioEngine) {
+        super.init(
+            contentRect: NSRect(x: 0, y: 0, width: 200, height: 240),
+            styleMask: [
+                .titled, .closable, .miniaturizable,
+                .nonactivatingPanel, .fullSizeContentView
+            ],
+            backing: .buffered,
+            defer: false
+        )
+
+        // Title bar blends into glass
+        titleVisibility = .hidden
+        titlebarAppearsTransparent = true
+
+        isFloatingPanel = true
+        level = .floating
+        hidesOnDeactivate = false
+        collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+        isMovableByWindowBackground = true
+        backgroundColor = .clear
+        isOpaque = false
+        hasShadow = true
+
+        let hosting = NSHostingView(
+            rootView: ControlsView(
+                timerEngine: timerEngine,
+                audioEngine: audioEngine
+            )
+        )
+        hosting.setFrameSize(hosting.fittingSize)
+        contentView = hosting
+        setContentSize(hosting.fittingSize)
+        hostingView = hosting
+        setFrameAutosaveName("FloatingPanel2")
+    }
+
+    override var canBecomeKey: Bool { true }
+    override var canBecomeMain: Bool { false }
+
+    override func resignKey() {
+        super.resignKey()
+    }
+
+    override func layoutIfNeeded() {
+        super.layoutIfNeeded()
+        guard let hosting = hostingView else { return }
+        let newSize = hosting.fittingSize
+        if abs(frame.size.width - newSize.width) &gt; 1
+            || abs(frame.size.height - newSize.height) &gt; 1 {
+            let topY = frame.origin.y + frame.size.height
+            let newOrigin = NSPoint(x: frame.origin.x, y: topY - newSize.height)
+            setFrame(NSRect(origin: newOrigin, size: newSize),
+                     display: true, animate: false)
+        }
+    }
+}</pre>
+      <p style="color: rgba(255,255,255,0.5); font-size: 11px;">Key changes: <code>.titled + .closable + .miniaturizable</code> for traffic lights. <code>.fullSizeContentView</code> + transparent titlebar so glass extends behind.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="controls" onclick="toggleSelect(this)">
+    <div class="letter">2</div>
+    <div class="content">
+      <h3>ControlsView.swift — Full Rewrite</h3>
+      <pre style="background: rgba(255,255,255,0.06); padding: 12px; border-radius: 8px; font-size: 11px; color: rgba(255,255,255,0.85); overflow-x: auto; margin: 8px 0; line-height: 1.5;">
+import SwiftUI
+
+struct ControlsView: View {
+    @ObservedObject var timerEngine: TimerEngine
+    @ObservedObject var audioEngine: AudioEngine
+    @State private var trayOpen = false
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // --- Core (always visible) ---
+            VStack(spacing: 8) {
+                if !modeLabel.isEmpty {
+                    Text(modeLabel)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+
+                Text(formatTime(timerEngine.timeRemaining))
+                    .font(.system(size: 48, weight: .ultraLight))
+                    .monospacedDigit()
+                    .foregroundStyle(.primary)
+                    .contentTransition(.numericText())
+
+                // Action buttons
+                HStack(spacing: 8) {
+                    if timerEngine.timerState == .idle
+                        || timerEngine.timerState == .paused {
+                        Button { timerEngine.start() } label: {
+                            Label("Start", systemImage: "play.fill")
+                        }
+                        .buttonStyle(.glassProminent)
+                        .controlSize(.large)
+                    }
+
+                    if timerEngine.timerState == .running {
+                        Button { timerEngine.pause() } label: {
+                            Label("Pause", systemImage: "pause.fill")
+                        }
+                        .buttonStyle(.glassProminent)
+                        .controlSize(.large)
+                    }
+
+                    if timerEngine.timerState == .idle
+                        || (timerEngine.timerState == .running
+                            &amp;&amp; timerEngine.currentMode == .work) {
+                        Button { timerEngine.startBreak() } label: {
+                            Label("Break", systemImage: "cup.and.saucer.fill")
+                        }
+                        .buttonStyle(.glass)
+                    }
+
+                    if timerEngine.canResumeWork
+                        &amp;&amp; timerEngine.currentMode == .break_ {
+                        Button { timerEngine.resumeWork() } label: {
+                            Label("Resume", systemImage: "arrow.counterclockwise")
+                        }
+                        .buttonStyle(.glass)
+                    }
+
+                    if timerEngine.timerState == .running
+                        || timerEngine.timerState == .paused
+                        || timerEngine.timerState == .onBreak {
+                        Button { timerEngine.stop() } label: {
+                            Label("Stop", systemImage: "stop.fill")
+                        }
+                        .buttonStyle(.glass)
+                    }
+                }
+
+                // Tray toggle
+                Button {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        trayOpen.toggle()
+                    }
+                } label: {
+                    Image(systemName: trayOpen ? "chevron.up" : "chevron.down")
+                        .font(.system(size: 8, weight: .semibold))
+                        .foregroundStyle(.tertiary)
+                        .frame(width: 32, height: 12)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.top, 28)  // room for traffic light titlebar
+            .padding(.horizontal, 18)
+            .padding(.bottom, trayOpen ? 8 : 18)
+
+            // --- Tray (toggled) ---
+            if trayOpen {
+                VStack(spacing: 10) {
+                    Divider()
+
+                    // Sound picker
+                    Picker(selection: $audioEngine.selectedSound) {
+                        ForEach(AmbientSound.allCases) { sound in
+                            Text(sound.displayName).tag(sound)
+                        }
+                    } label: {
+                        Label("Sound", systemImage: "speaker.wave.2")
+                    }
+                    .pickerStyle(.menu)
+
+                    // Duration steppers
+                    Stepper(
+                        "Focus: \(timerEngine.workDuration)m",
+                        value: $timerEngine.workDuration,
+                        in: 5...120, step: 5
+                    )
+                    .font(.system(size: 12))
+
+                    Stepper(
+                        "Break: \(timerEngine.breakDuration)m",
+                        value: $timerEngine.breakDuration,
+                        in: 1...30, step: 5
+                    )
+                    .font(.system(size: 12))
+
+                    Divider()
+
+                    Button {
+                        NSApplication.shared.terminate(nil)
+                    } label: {
+                        Label("Quit", systemImage: "power")
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.secondary)
+                    .font(.system(size: 11))
+                }
+                .padding(.horizontal, 18)
+                .padding(.bottom, 14)
+                .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+        }
+        .frame(width: 200)
+        .glassEffect(.regular, in: .rect(cornerRadius: 14))
+    }
+
+    private var modeLabel: String {
+        switch timerEngine.timerState {
+        case .idle: return ""
+        case .running:
+            return timerEngine.currentMode == .work ? "" : "Break"
+        case .paused: return "Paused"
+        case .onBreak: return "Break"
+        }
+    }
+
+    private func formatTime(_ seconds: Int) -> String {
+        let m = seconds / 60
+        let s = seconds % 60
+        return String(format: "%02d:%02d", m, s)
+    }
+}</pre>
+      <p style="color: rgba(255,255,255,0.5); font-size: 11px;">All custom ButtonStyles deleted. Native <code>Stepper</code>, native <code>Picker(.menu)</code>, <code>.glassEffect()</code> on root, system colors throughout. Padding top increased to 28 for titlebar clearance.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="soundpicker" onclick="toggleSelect(this)">
+    <div class="letter">3</div>
+    <div class="content">
+      <h3>SoundPickerView.swift — Inlined into ControlsView</h3>
+      <pre style="background: rgba(255,255,255,0.06); padding: 12px; border-radius: 8px; font-size: 11px; color: rgba(255,255,255,0.85); overflow-x: auto; margin: 8px 0; line-height: 1.5;">
+// DELETE this file entirely.
+// The sound picker is now 6 lines inside ControlsView:
+//
+//   Picker(selection: $audioEngine.selectedSound) {
+//       ForEach(AmbientSound.allCases) { sound in
+//           Text(sound.displayName).tag(sound)
+//       }
+//   } label: {
+//       Label("Sound", systemImage: "speaker.wave.2")
+//   }
+//   .pickerStyle(.menu)</pre>
+      <p style="color: rgba(255,255,255,0.5); font-size: 11px;">Native Picker handles the chevron, checkmark selection, and hover state. No custom view needed.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="menubar" onclick="toggleSelect(this)">
+    <div class="letter">4</div>
+    <div class="content">
+      <h3>MenuBarView.swift — System Colors</h3>
+      <pre style="background: rgba(255,255,255,0.06); padding: 12px; border-radius: 8px; font-size: 11px; color: rgba(255,255,255,0.85); overflow-x: auto; margin: 8px 0; line-height: 1.5;">
+import SwiftUI
+
+struct MenuBarView: View {
+    @ObservedObject var timerEngine: TimerEngine
+
+    var body: some View {
+        VStack(spacing: 12) {
+            Text(modeLabel)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            Text(formatTime(timerEngine.timeRemaining))
+                .font(.system(size: 48, weight: .ultraLight))
+                .monospacedDigit()
+                .foregroundStyle(.primary)
+                .contentTransition(.numericText())
+
+            HStack(spacing: 16) {
+                if timerEngine.timerState == .idle
+                    || timerEngine.timerState == .paused {
+                    Button("Start") { timerEngine.start() }
+                        .keyboardShortcut(.defaultAction)
+                }
+                if timerEngine.timerState == .running {
+                    Button("Pause") { timerEngine.pause() }
+                }
+                if timerEngine.timerState == .running
+                    || timerEngine.timerState == .paused
+                    || timerEngine.timerState == .onBreak {
+                    Button("Stop") { timerEngine.stop() }
+                }
+            }
+            .controlSize(.large)
+
+            Divider()
+
+            Stepper(
+                "Focus: \(timerEngine.workDuration)m",
+                value: $timerEngine.workDuration,
+                in: 5...120, step: 5
+            )
+            Stepper(
+                "Break: \(timerEngine.breakDuration)m",
+                value: $timerEngine.breakDuration,
+                in: 1...30, step: 5
+            )
+
+            Divider()
+
+            Button("Toggle Panel") {
+                (NSApp.delegate as? AppDelegate)?.togglePanel()
+            }
+
+            Divider()
+
+            Button("Quit") {
+                NSApplication.shared.terminate(nil)
+            }
+            .controlSize(.small)
+            .foregroundStyle(.secondary)
+        }
+        .padding(16)
+        .frame(width: 220)
+    }
+
+    private var modeLabel: String {
+        switch timerEngine.timerState {
+        case .idle: return ""
+        case .running:
+            return timerEngine.currentMode == .work ? "" : "Break"
+        case .paused: return "Paused"
+        case .onBreak: return "Break"
+        }
+    }
+
+    private func formatTime(_ seconds: Int) -> String {
+        let m = seconds / 60
+        let s = seconds % 60
+        return String(format: "%02d:%02d", m, s)
+    }
+}</pre>
+      <p style="color: rgba(255,255,255,0.5); font-size: 11px;">Removed <code>TokyoNight</code> refs from StepperRow usage. Native <code>Stepper</code> replaces custom rows. System colors via <code>.foregroundStyle()</code>.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="theme" onclick="toggleSelect(this)">
+    <div class="letter">5</div>
+    <div class="content">
+      <h3>Theme.swift — DELETE</h3>
+      <pre style="background: rgba(255,255,255,0.06); padding: 12px; border-radius: 8px; font-size: 11px; color: rgba(255,255,255,0.85); overflow-x: auto; margin: 8px 0; line-height: 1.5;">
+// DELETE this entire file.
+// TokyoNight enum is no longer referenced anywhere.</pre>
+    </div>
+  </div>
+
+</div>

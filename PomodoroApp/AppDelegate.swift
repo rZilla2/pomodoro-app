@@ -68,6 +68,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         floatingPanel = panel
 
+        // Listen for hide-panel requests from custom traffic light close button
+        NotificationCenter.default.addObserver(
+            forName: .init("hidePanelRequested"),
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in
+                self?.floatingPanel?.orderOut(nil)
+            }
+        }
+
         // Listen for work session completion → show full-screen notification
         NotificationCenter.default.addObserver(
             forName: .workSessionComplete,

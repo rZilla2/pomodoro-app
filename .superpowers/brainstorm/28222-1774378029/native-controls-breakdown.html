@@ -1,0 +1,133 @@
+<h2>Native macOS Controls — What Changes</h2>
+<p class="subtitle">Every custom control replaced with its native SwiftUI equivalent. Click to approve each section.</p>
+
+<div class="options" data-multiselect>
+
+  <div class="option" data-choice="panel" onclick="toggleSelect(this)">
+    <div class="letter">1</div>
+    <div class="content">
+      <h3>Panel → Liquid Glass NSPanel with Traffic Lights</h3>
+      <p><strong>Delete:</strong> Custom <code>xmark</code> close button overlay, <code>TokyoNight.bg.opacity(0.75)</code> background</p>
+      <p><strong>Replace with:</strong></p>
+      <pre style="background: rgba(255,255,255,0.06); padding: 10px; border-radius: 8px; font-size: 11px; color: rgba(255,255,255,0.8); overflow-x: auto; margin: 8px 0;">
+// FloatingPanelWindow.init styleMask:
+styleMask: [.titled, .closable, .miniaturizable,
+            .nonactivatingPanel, .fullSizeContentView]
+titleVisibility = .hidden
+titlebarAppearsTransparent = true
+// Traffic lights appear automatically ✓
+
+// ControlsView body:
+.glassEffect(.regular, in: .rect(cornerRadius: 14))</pre>
+      <p style="color: rgba(255,255,255,0.5); font-size: 11px;">Traffic light buttons (red/yellow/green) come free with <code>.titled + .closable + .miniaturizable</code>. The <code>.fullSizeContentView</code> lets content extend behind the title bar. <code>titlebarAppearsTransparent</code> blends it into the glass.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="buttons" onclick="toggleSelect(this)">
+    <div class="letter">2</div>
+    <div class="content">
+      <h3>Buttons → .glass / .glassProminent</h3>
+      <p><strong>Delete:</strong> <code>IconButtonStyle</code>, <code>ThemeButtonStyle</code>, <code>TrayActionStyle</code> — all 4 custom ButtonStyles</p>
+      <p><strong>Replace with:</strong></p>
+      <pre style="background: rgba(255,255,255,0.06); padding: 10px; border-radius: 8px; font-size: 11px; color: rgba(255,255,255,0.8); overflow-x: auto; margin: 8px 0;">
+// Primary action (Start, Pause):
+Button { timerEngine.start() } label: {
+    Label("Start", systemImage: "play.fill")
+}
+.buttonStyle(.glassProminent)
+.controlSize(.large)
+
+// Secondary action (Break, Stop):
+Button { timerEngine.stop() } label: {
+    Label("Stop", systemImage: "stop.fill")
+}
+.buttonStyle(.glass)</pre>
+      <p style="color: rgba(255,255,255,0.5); font-size: 11px;">Native glass buttons with SF Symbol icons + text labels. macOS handles all hover, press, and focus states. <code>.controlSize(.large)</code> on primary for visual weight.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="timer" onclick="toggleSelect(this)">
+    <div class="letter">3</div>
+    <div class="content">
+      <h3>Timer → SF Pro Ultra Light + System Colors</h3>
+      <p><strong>Delete:</strong> <code>.system(size: 49, weight: .light, design: .monospaced)</code>, <code>TokyoNight.fg</code></p>
+      <p><strong>Replace with:</strong></p>
+      <pre style="background: rgba(255,255,255,0.06); padding: 10px; border-radius: 8px; font-size: 11px; color: rgba(255,255,255,0.8); overflow-x: auto; margin: 8px 0;">
+Text(formatTime(timerEngine.timeRemaining))
+    .font(.system(size: 48, weight: .ultraLight))
+    .monospacedDigit()
+    .foregroundStyle(.primary)   // adapts to dark/light
+    .contentTransition(.numericText())</pre>
+      <p style="color: rgba(255,255,255,0.5); font-size: 11px;">SF Pro (not Mono) with tabular figures via <code>.monospacedDigit()</code>. <code>.contentTransition(.numericText())</code> gives a native animated digit roll on countdown tick.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="stepper" onclick="toggleSelect(this)">
+    <div class="letter">4</div>
+    <div class="content">
+      <h3>Duration → Native Stepper</h3>
+      <p><strong>Delete:</strong> Custom <code>StepperRow</code> view, custom <code>StepperButtonStyle</code></p>
+      <p><strong>Replace with:</strong></p>
+      <pre style="background: rgba(255,255,255,0.06); padding: 10px; border-radius: 8px; font-size: 11px; color: rgba(255,255,255,0.8); overflow-x: auto; margin: 8px 0;">
+Stepper("Focus: \(timerEngine.workDuration)m",
+        value: $timerEngine.workDuration,
+        in: 5...120, step: 5)
+    .font(.system(size: 12))
+
+Stepper("Break: \(timerEngine.breakDuration)m",
+        value: $timerEngine.breakDuration,
+        in: 1...30, step: 5)
+    .font(.system(size: 12))</pre>
+      <p style="color: rgba(255,255,255,0.5); font-size: 11px;">Native macOS Stepper renders +/- buttons automatically. Keyboard arrow keys work for free. Glass effect inherited from parent container.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="picker" onclick="toggleSelect(this)">
+    <div class="letter">5</div>
+    <div class="content">
+      <h3>Sound Picker → Native Menu Picker</h3>
+      <p><strong>Delete:</strong> Custom <code>SoundPickerView</code> with manual Menu + HStack layout</p>
+      <p><strong>Replace with:</strong></p>
+      <pre style="background: rgba(255,255,255,0.06); padding: 10px; border-radius: 8px; font-size: 11px; color: rgba(255,255,255,0.8); overflow-x: auto; margin: 8px 0;">
+Picker(selection: $audioEngine.selectedSound) {
+    ForEach(AmbientSound.allCases) { sound in
+        Text(sound.displayName).tag(sound)
+    }
+} label: {
+    Label("Sound", systemImage: "speaker.wave.2")
+}
+.pickerStyle(.menu)</pre>
+      <p style="color: rgba(255,255,255,0.5); font-size: 11px;">Native dropdown. macOS renders the chevron, selection checkmark, and hover states automatically.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="colors" onclick="toggleSelect(this)">
+    <div class="letter">6</div>
+    <div class="content">
+      <h3>Colors → Delete TokyoNight, Use System Semantic</h3>
+      <p><strong>Delete:</strong> Entire <code>Theme.swift</code> / <code>TokyoNight</code> enum</p>
+      <p><strong>Replace with:</strong></p>
+      <pre style="background: rgba(255,255,255,0.06); padding: 10px; border-radius: 8px; font-size: 11px; color: rgba(255,255,255,0.8); overflow-x: auto; margin: 8px 0;">
+.foregroundStyle(.primary)     // main text (timer)
+.foregroundStyle(.secondary)   // labels (Focus:, Break:)
+.foregroundStyle(.tertiary)    // subtle elements (chevron)
+
+// Dividers:
+Divider()   // uses system separator color automatically</pre>
+      <p style="color: rgba(255,255,255,0.5); font-size: 11px;">Zero custom colors. Automatic dark/light mode. Automatic Increased Contrast accessibility support.</p>
+    </div>
+  </div>
+
+</div>
+
+<h2 style="margin-top: 32px;">Files Affected</h2>
+<div class="section" style="font-size: 13px; line-height: 1.8;">
+  <p>
+    <span style="color: #ff5f57;">DELETE</span> — <code>Theme.swift</code> (entire file)<br>
+    <span style="color: #febc2e;">REWRITE</span> — <code>ControlsView.swift</code> (native controls, glass buttons, system colors)<br>
+    <span style="color: #febc2e;">REWRITE</span> — <code>SoundPickerView.swift</code> (native Picker)<br>
+    <span style="color: #febc2e;">EDIT</span> — <code>FloatingPanelWindow.swift</code> (styleMask for traffic lights + glass)<br>
+    <span style="color: #febc2e;">EDIT</span> — <code>MenuBarView.swift</code> (remove TokyoNight refs, system colors)<br>
+    <span style="color: #28c840;">KEEP</span> — <code>AppDelegate.swift</code>, <code>TimerEngine.swift</code>, <code>AudioEngine.swift</code> (no UI changes)
+  </p>
+</div>

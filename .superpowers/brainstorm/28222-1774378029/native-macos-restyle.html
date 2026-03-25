@@ -1,0 +1,71 @@
+<h2>Native macOS Restyle — Current vs. Direction</h2>
+<p class="subtitle">Your app currently uses a custom Tokyo Night theme. Here's what "native Apple dark mode" means in practice.</p>
+
+<div class="split">
+  <div class="mockup">
+    <div class="mockup-header">Current: Tokyo Night Custom Theme</div>
+    <div class="mockup-body" style="background: rgb(26, 27, 46); padding: 24px; text-align: center; border-radius: 12px;">
+      <div style="color: rgb(86, 95, 130); font-size: 11px;">Break</div>
+      <div style="font-family: 'SF Mono', monospace; font-size: 42px; font-weight: 300; color: rgb(169, 177, 214); letter-spacing: 2px;">25:00</div>
+      <div style="display: flex; gap: 10px; justify-content: center; margin-top: 12px;">
+        <div style="width: 32px; height: 32px; background: rgba(115, 208, 165, 0.15); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: rgb(115, 208, 165); font-size: 14px;">▶</div>
+        <div style="width: 32px; height: 32px; background: rgba(187, 154, 247, 0.15); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: rgb(187, 154, 247); font-size: 14px;">☕</div>
+      </div>
+      <div style="color: rgb(86, 95, 130); font-size: 8px; margin-top: 10px;">▾</div>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">Target: Native macOS Dark Mode</div>
+    <div class="mockup-body" style="background: rgba(40, 40, 40, 0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); padding: 24px; text-align: center; border-radius: 12px; border: 0.5px solid rgba(255,255,255,0.1);">
+      <div style="color: rgba(255,255,255,0.5); font-size: 11px; font-family: -apple-system, BlinkMacSystemFont, system-ui;">Break</div>
+      <div style="font-family: -apple-system, BlinkMacSystemFont, system-ui; font-size: 42px; font-weight: 200; color: rgba(255,255,255,0.85); letter-spacing: -1px; font-feature-settings: 'tnum';">25:00</div>
+      <div style="display: flex; gap: 8px; justify-content: center; margin-top: 14px;">
+        <div style="width: 32px; height: 32px; background: rgba(255,255,255,0.08); border-radius: 7px; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.85); font-size: 13px; border: 0.5px solid rgba(255,255,255,0.1);">▶</div>
+        <div style="width: 32px; height: 32px; background: rgba(255,255,255,0.08); border-radius: 7px; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.85); font-size: 13px; border: 0.5px solid rgba(255,255,255,0.1);">☕</div>
+      </div>
+      <div style="color: rgba(255,255,255,0.3); font-size: 8px; margin-top: 10px;">▾</div>
+    </div>
+  </div>
+</div>
+
+<h2 style="margin-top: 40px;">Key Design Principles</h2>
+<p class="subtitle">Click an approach to select it</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Full System Colors — Zero Custom Colors</h3>
+      <p>Use <strong>only</strong> SwiftUI semantic colors: <code>.primary</code>, <code>.secondary</code>, <code>.tertiaryLabel</code>, <code>.controlAccentColor</code>. No custom hex values at all. Buttons use <code>.bordered</code> and <code>.borderless</code> native styles. The app looks exactly like a system popover — indistinguishable from macOS Settings or Spotlight.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>Zero maintenance — automatically adapts to future macOS themes</li><li>Perfect dark/light mode for free</li><li>Feels invisible, like part of the OS</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Very plain — no personality at all</li><li>Accent color is whatever the user set in System Settings</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>System Colors + Subtle Accent</h3>
+      <p>System semantic colors everywhere <strong>except</strong> a single app accent color (e.g., a warm orange or teal) used sparingly on the active timer ring/progress and the primary action button. Everything else — text, backgrounds, dividers, secondary buttons — uses system colors. Think: macOS Calculator with one branded touch.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>Native feel with a hint of identity</li><li>Still adapts to dark/light mode automatically</li><li>The accent draws the eye to the timer — the one thing that matters</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Slightly more to maintain (one color)</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Vibrancy Material — Translucent Panel</h3>
+      <p>Use <code>.ultraThinMaterial</code> or <code>.regularMaterial</code> for the panel background — the desktop wallpaper bleeds through like Control Center or Notification Center. System semantic colors for text and controls. The panel itself becomes the design statement.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>Most "Apple" feel — matches Control Center, widgets, Notification Center</li><li>Gorgeous with any wallpaper</li><li>Dark mode vibrancy is particularly beautiful</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Timer text readability can suffer on busy wallpapers</li><li>Needs careful contrast testing</li></ul></div>
+      </div>
+    </div>
+  </div>
+</div>

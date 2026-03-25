@@ -7,8 +7,21 @@ struct ControlsView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // --- Core (always visible) ---
             VStack(spacing: 8) {
+                // Traffic light buttons
+                HStack(spacing: 7) {
+                    TrafficLightButton(color: .red) {
+                        NotificationCenter.default.post(
+                            name: .init("hidePanelRequested"), object: nil)
+                    }
+                    TrafficLightButton(color: .yellow) {
+                        NSApp.keyWindow?.miniaturize(NSApp)
+                    }
+                    TrafficLightButton(color: .green) { }
+                    Spacer()
+                }
+                .padding(.bottom, 4)
+
                 if !modeLabel.isEmpty {
                     Text(modeLabel)
                         .font(.subheadline)
@@ -21,7 +34,7 @@ struct ControlsView: View {
                     .foregroundStyle(.primary)
                     .contentTransition(.numericText())
 
-                HStack(spacing: 8) {
+                GlassEffectContainer(spacing: 8) {
                     if timerEngine.timerState == .idle
                         || timerEngine.timerState == .paused {
                         Button { timerEngine.start() } label: {
@@ -46,6 +59,7 @@ struct ControlsView: View {
                             Image(systemName: "cup.and.saucer.fill")
                         }
                         .buttonStyle(.glass)
+                        .controlSize(.large)
                     }
 
                     if timerEngine.canResumeWork
@@ -54,6 +68,7 @@ struct ControlsView: View {
                             Image(systemName: "arrow.counterclockwise")
                         }
                         .buttonStyle(.glass)
+                        .controlSize(.large)
                     }
 
                     if timerEngine.timerState == .running
@@ -63,6 +78,7 @@ struct ControlsView: View {
                             Image(systemName: "stop.fill")
                         }
                         .buttonStyle(.glass)
+                        .controlSize(.large)
                     }
                 }
 
@@ -79,11 +95,10 @@ struct ControlsView: View {
                 }
                 .buttonStyle(.plain)
             }
-            .padding(.top, 28)
+            .padding(.top, 14)
             .padding(.horizontal, 18)
             .padding(.bottom, trayOpen ? 8 : 18)
 
-            // --- Tray (toggled) ---
             if trayOpen {
                 VStack(spacing: 10) {
                     Divider()
@@ -97,19 +112,18 @@ struct ControlsView: View {
                     }
                     .pickerStyle(.menu)
 
-                    Stepper(
-                        "Focus: \(timerEngine.workDuration)m",
+                    DurationRow(
+                        label: "Focus",
                         value: $timerEngine.workDuration,
-                        in: 5...120, step: 5
+                        range: 5...120,
+                        step: 5
                     )
-                    .font(.system(size: 12))
-
-                    Stepper(
-                        "Break: \(timerEngine.breakDuration)m",
+                    DurationRow(
+                        label: "Break",
                         value: $timerEngine.breakDuration,
-                        in: 1...30, step: 5
+                        range: 1...30,
+                        step: 5
                     )
-                    .font(.system(size: 12))
 
                     Divider()
 
@@ -127,8 +141,8 @@ struct ControlsView: View {
                 .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
-        .frame(width: 200)
-        .background(.ultraThickMaterial, in: RoundedRectangle(cornerRadius: 14))
+        .frame(width: 220)
+        .glassEffect(.regular, in: .rect(cornerRadius: 14))
     }
 
     private var modeLabel: String {
@@ -146,5 +160,96 @@ struct ControlsView: View {
         let m = seconds / 60
         let s = seconds % 60
         return String(format: "%02d:%02d", m, s)
+    }
+}
+
+// MARK: - Traffic Light Button
+
+private struct TrafficLightButton: View {
+    let color: TrafficLightColor
+    let action: () -> Void
+    @State private var hovering = false
+
+    enum TrafficLightColor {
+        case red, yellow, green
+        var fill: Color {
+            switch self {
+            case .red: return Color(red: 1.0, green: 0.37, blue: 0.34)
+            case .yellow: return Color(red: 1.0, green: 0.74, blue: 0.18)
+            case .green: return Color(red: 0.16, green: 0.78, blue: 0.25)
+            }
+        }
+        var symbol: String {
+            switch self {
+            case .red: return "xmark"
+            case .yellow: return "minus"
+            case .green: return "plus"
+            }
+        }
+    }
+
+    var body: some View {
+        Button(action: action) {
+            ZStack {
+                Circle()
+                    .fill(color.fill)
+                    .frame(width: 12, height: 12)
+                if hovering {
+                    Image(systemName: color.symbol)
+                        .font(.system(size: 7, weight: .bold))
+                        .foregroundStyle(.black.opacity(0.5))
+                }
+            }
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering = $0 }
+    }
+}
+
+// MARK: - Duration Row (+/- buttons)
+
+private struct DurationRow: View {
+    let label: String
+    @Binding var value: Int
+    let range: ClosedRange<Int>
+    let step: Int
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Text(label)
+                .font(.system(size: 12))
+                .foregroundStyle(.secondary)
+                .frame(width: 40, alignment: .leading)
+
+            GlassEffectContainer(spacing: 4) {
+                Button {
+                    value = max(range.lowerBound, value - step)
+                } label: {
+                    Image(systemName: "minus")
+                        .font(.system(size: 10, weight: .medium))
+                        .frame(width: 24, height: 24)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.glass)
+                .controlSize(.small)
+
+                Button {
+                    value = min(range.upperBound, value + step)
+                } label: {
+                    Image(systemName: "plus")
+                        .font(.system(size: 10, weight: .medium))
+                        .frame(width: 24, height: 24)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.glass)
+                .controlSize(.small)
+            }
+
+            Text("\(value)m")
+                .font(.system(size: 12))
+                .monospacedDigit()
+                .foregroundStyle(.primary)
+                .frame(width: 32, alignment: .center)
+        }
     }
 }
