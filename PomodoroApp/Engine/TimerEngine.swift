@@ -11,11 +11,11 @@ final class TimerEngine: ObservableObject {
     enum Mode: Sendable { case work, break_ }
 
     @Published var timerState: TimerState = .idle
-    @Published var timeRemaining: Int = 25 * 60
+    @Published var timeRemaining: Int = 15 * 60
     @Published var currentMode: Mode = .work
     @Published var canResumeWork: Bool = false
 
-    @AppStorage("workDuration") var workDuration: Int = 25 {
+    @AppStorage("workDuration") var workDuration: Int = 15 {
         didSet {
             if timerState == .idle && currentMode == .work {
                 timeRemaining = workDuration * 60

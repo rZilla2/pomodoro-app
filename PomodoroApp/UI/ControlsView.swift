@@ -244,7 +244,7 @@ private struct TrafficLightButton: View {
     }
 }
 
-// MARK: - Duration Row: Label  [+][−]  1m|5m  Value
+// MARK: - Duration Row: Label  [+][−]  ▾step  (value when idle)
 
 private struct DurationRow: View {
     let label: String
@@ -268,11 +268,9 @@ private struct DurationRow: View {
                 .foregroundStyle(.primary)
                 .frame(width: 38, alignment: .leading)
 
-            // + then − (plus on left)
+            // + then −
             HStack(spacing: 2) {
-                Button {
-                    handlePlus()
-                } label: {
+                Button { handlePlus() } label: {
                     Image(systemName: "plus")
                         .font(.system(size: 10, weight: .medium))
                         .foregroundStyle(.primary)
@@ -286,9 +284,7 @@ private struct DurationRow: View {
                 .buttonStyle(.plain)
                 .onHover { plusHover = $0 }
 
-                Button {
-                    handleMinus()
-                } label: {
+                Button { handleMinus() } label: {
                     Image(systemName: "minus")
                         .font(.system(size: 10, weight: .medium))
                         .foregroundStyle(.primary)
@@ -303,21 +299,26 @@ private struct DurationRow: View {
                 .onHover { minusHover = $0 }
             }
 
-            // 1m / 5m step toggle
-            HStack(spacing: 0) {
-                StepToggle(label: "1m", isSelected: stepSize == 1) {
-                    stepSize = 1
-                }
-                StepToggle(label: "5m", isSelected: stepSize == 5) {
-                    stepSize = 5
-                }
+            // Step size picker (dropdown)
+            Picker(selection: $stepSize) {
+                Text("1m").tag(1)
+                Text("5m").tag(5)
+                Text("10m").tag(10)
+            } label: {
+                EmptyView()
             }
+            .pickerStyle(.menu)
+            .frame(width: 52)
+            .controlSize(.small)
 
-            Text("\(value)m")
-                .font(.system(size: 12))
-                .monospacedDigit()
-                .foregroundStyle(.primary)
-                .frame(minWidth: 24, alignment: .trailing)
+            // Duration value — only when idle
+            if !isRunning {
+                Text("\(value)m")
+                    .font(.system(size: 12))
+                    .monospacedDigit()
+                    .foregroundStyle(.primary)
+                    .frame(minWidth: 24, alignment: .trailing)
+            }
         }
         .alert("End session?", isPresented: $showUnderflowAlert) {
             Button("Cancel", role: .cancel) { }
@@ -346,24 +347,5 @@ private struct DurationRow: View {
         } else {
             value = max(range.lowerBound, value - stepSize)
         }
-    }
-}
-
-// MARK: - Step Toggle (1m / 5m)
-
-private struct StepToggle: View {
-    let label: String
-    let isSelected: Bool
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            Text(label)
-                .font(.system(size: 9, weight: isSelected ? .semibold : .regular))
-                .foregroundStyle(isSelected ? .primary : .tertiary)
-                .frame(width: 22, height: 18)
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
     }
 }
