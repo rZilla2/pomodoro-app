@@ -8,7 +8,7 @@ struct ControlsView: View {
     var body: some View {
         VStack(spacing: 0) {
             VStack(spacing: 8) {
-                // Traffic light buttons
+                // Traffic lights — always visible
                 HStack(spacing: 7) {
                     TrafficLightButton(color: .red) {
                         NotificationCenter.default.post(
@@ -20,7 +20,7 @@ struct ControlsView: View {
                     TrafficLightButton(color: .green) { }
                     Spacer()
                 }
-                .padding(.bottom, 4)
+                .frame(height: 12)
 
                 if !modeLabel.isEmpty {
                     Text(modeLabel)
@@ -34,54 +34,46 @@ struct ControlsView: View {
                     .foregroundStyle(.primary)
                     .contentTransition(.numericText())
 
-                GlassEffectContainer(spacing: 8) {
+                // Action buttons — icon only, no backgrounds
+                HStack(spacing: 12) {
                     if timerEngine.timerState == .idle
                         || timerEngine.timerState == .paused {
-                        Button { timerEngine.start() } label: {
-                            Image(systemName: "play.fill")
+                        IconButton(symbol: "play.fill", isPrimary: true) {
+                            timerEngine.start()
                         }
-                        .buttonStyle(.glassProminent)
-                        .controlSize(.large)
                     }
 
                     if timerEngine.timerState == .running {
-                        Button { timerEngine.pause() } label: {
-                            Image(systemName: "pause.fill")
+                        IconButton(symbol: "pause.fill", isPrimary: true) {
+                            timerEngine.pause()
                         }
-                        .buttonStyle(.glassProminent)
-                        .controlSize(.large)
                     }
 
                     if timerEngine.timerState == .idle
                         || (timerEngine.timerState == .running
                             && timerEngine.currentMode == .work) {
-                        Button { timerEngine.startBreak() } label: {
-                            Image(systemName: "cup.and.saucer.fill")
+                        IconButton(symbol: "cup.and.saucer.fill", isPrimary: false) {
+                            timerEngine.startBreak()
                         }
-                        .buttonStyle(.glass)
-                        .controlSize(.large)
                     }
 
                     if timerEngine.canResumeWork
                         && timerEngine.currentMode == .break_ {
-                        Button { timerEngine.resumeWork() } label: {
-                            Image(systemName: "arrow.counterclockwise")
+                        IconButton(symbol: "arrow.counterclockwise", isPrimary: false) {
+                            timerEngine.resumeWork()
                         }
-                        .buttonStyle(.glass)
-                        .controlSize(.large)
                     }
 
                     if timerEngine.timerState == .running
                         || timerEngine.timerState == .paused
                         || timerEngine.timerState == .onBreak {
-                        Button { timerEngine.stop() } label: {
-                            Image(systemName: "stop.fill")
+                        IconButton(symbol: "stop.fill", isPrimary: false) {
+                            timerEngine.stop()
                         }
-                        .buttonStyle(.glass)
-                        .controlSize(.large)
                     }
                 }
 
+                // Tray toggle
                 Button {
                     withAnimation(.easeInOut(duration: 0.2)) {
                         trayOpen.toggle()
@@ -103,15 +95,32 @@ struct ControlsView: View {
                 VStack(spacing: 10) {
                     Divider()
 
-                    Picker(selection: $audioEngine.selectedSound) {
-                        ForEach(AmbientSound.allCases) { sound in
-                            Text(sound.displayName).tag(sound)
+                    HStack(spacing: 6) {
+                        Button {
+                            audioEngine.toggleMute()
+                        } label: {
+                            Image(systemName: audioEngine.isMuted
+                                  ? "speaker.slash.fill"
+                                  : "speaker.wave.2.fill")
+                                .font(.system(size: 12))
+                                .foregroundStyle(audioEngine.isMuted ? .secondary : .primary)
+                                .frame(width: 20, height: 20)
+                                .contentShape(Rectangle())
                         }
-                    } label: {
-                        Label("Sound", systemImage: "speaker.wave.2")
-                    }
-                    .pickerStyle(.menu)
+                        .buttonStyle(.plain)
 
+                        Picker(selection: $audioEngine.selectedSound) {
+                            ForEach(AmbientSound.allCases) { sound in
+                                Text(sound.displayName).tag(sound)
+                            }
+                        } label: {
+                            Text("Sound")
+                        }
+                        .pickerStyle(.menu)
+                        .labelsHidden()
+                    }
+
+                    // Duration rows: Label  [−][+]  Value
                     DurationRow(
                         label: "Focus",
                         value: $timerEngine.workDuration,
@@ -163,6 +172,33 @@ struct ControlsView: View {
     }
 }
 
+// MARK: - Icon Button (no background, hover highlight)
+
+private struct IconButton: View {
+    let symbol: String
+    let isPrimary: Bool
+    let action: () -> Void
+    @State private var hovering = false
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.system(size: 16, weight: .medium))
+                .foregroundStyle(isPrimary ? .white : .secondary)
+                .frame(width: 36, height: 36)
+                .background(
+                    Circle()
+                        .fill(isPrimary
+                              ? Color.accentColor
+                              : (hovering ? .white.opacity(0.1) : .clear))
+                )
+                .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering = $0 }
+    }
+}
+
 // MARK: - Traffic Light Button
 
 private struct TrafficLightButton: View {
@@ -206,50 +242,63 @@ private struct TrafficLightButton: View {
     }
 }
 
-// MARK: - Duration Row (+/- buttons)
+// MARK: - Duration Row: Label  [−][+]  Value
 
 private struct DurationRow: View {
     let label: String
     @Binding var value: Int
     let range: ClosedRange<Int>
     let step: Int
+    @State private var minusHover = false
+    @State private var plusHover = false
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 6) {
             Text(label)
                 .font(.system(size: 12))
-                .foregroundStyle(.secondary)
-                .frame(width: 40, alignment: .leading)
+                .foregroundStyle(.primary)
+                .frame(width: 38, alignment: .leading)
 
-            GlassEffectContainer(spacing: 4) {
+            // −/+ side by side, no background, subtle hover
+            HStack(spacing: 2) {
                 Button {
                     value = max(range.lowerBound, value - step)
                 } label: {
                     Image(systemName: "minus")
                         .font(.system(size: 10, weight: .medium))
-                        .frame(width: 24, height: 24)
+                        .foregroundStyle(.primary)
+                        .frame(width: 22, height: 22)
+                        .background(
+                            RoundedRectangle(cornerRadius: 5)
+                                .fill(minusHover ? .white.opacity(0.1) : .clear)
+                        )
                         .contentShape(Rectangle())
                 }
-                .buttonStyle(.glass)
-                .controlSize(.small)
+                .buttonStyle(.plain)
+                .onHover { minusHover = $0 }
 
                 Button {
                     value = min(range.upperBound, value + step)
                 } label: {
                     Image(systemName: "plus")
                         .font(.system(size: 10, weight: .medium))
-                        .frame(width: 24, height: 24)
+                        .foregroundStyle(.primary)
+                        .frame(width: 22, height: 22)
+                        .background(
+                            RoundedRectangle(cornerRadius: 5)
+                                .fill(plusHover ? .white.opacity(0.1) : .clear)
+                        )
                         .contentShape(Rectangle())
                 }
-                .buttonStyle(.glass)
-                .controlSize(.small)
+                .buttonStyle(.plain)
+                .onHover { plusHover = $0 }
             }
 
             Text("\(value)m")
                 .font(.system(size: 12))
                 .monospacedDigit()
                 .foregroundStyle(.primary)
-                .frame(width: 32, alignment: .center)
+                .frame(minWidth: 28, alignment: .trailing)
         }
     }
 }

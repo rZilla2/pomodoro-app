@@ -29,6 +29,7 @@ enum AmbientSound: String, CaseIterable, Identifiable, Sendable {
 final class AudioEngine: ObservableObject {
 
     @Published var selectedSound: AmbientSound
+    @Published var isMuted: Bool = true
 
     private var ambientPlayer: AVAudioPlayer?
     private var chimePlayer: AVAudioPlayer?
@@ -55,7 +56,7 @@ final class AudioEngine: ObservableObject {
         do {
             let player = try AVAudioPlayer(contentsOf: url)
             player.numberOfLoops = -1 // infinite loop
-            player.volume = 0.7
+            player.volume = isMuted ? 0 : 0.7
             player.prepareToPlay()
             player.play()
             ambientPlayer = player
@@ -86,6 +87,11 @@ final class AudioEngine: ObservableObject {
         } catch {
             print("AudioEngine: failed to play chime – \(error)")
         }
+    }
+
+    func toggleMute() {
+        isMuted.toggle()
+        ambientPlayer?.volume = isMuted ? 0 : 0.7
     }
 
     func select(_ sound: AmbientSound) {
