@@ -8,7 +8,7 @@ struct ControlsView: View {
     var body: some View {
         VStack(spacing: 0) {
             VStack(spacing: 8) {
-                // Traffic lights — always visible
+                // Traffic lights — always visible, native 8px inset
                 HStack(spacing: 7) {
                     TrafficLightButton(color: .red) {
                         NotificationCenter.default.post(
@@ -21,6 +21,7 @@ struct ControlsView: View {
                     Spacer()
                 }
                 .frame(height: 12)
+                .padding(.horizontal, -6)
 
                 if !modeLabel.isEmpty {
                     Text(modeLabel)
