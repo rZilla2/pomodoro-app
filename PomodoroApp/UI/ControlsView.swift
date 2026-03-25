@@ -310,12 +310,14 @@ private struct DurationRow: View {
                 .foregroundStyle(.primary)
                 .frame(minWidth: 28, alignment: .trailing)
         }
-        .alert("Result would be less than zero", isPresented: $showUnderflowAlert) {
+        .alert("End Session?", isPresented: $showUnderflowAlert) {
             Button("Cancel", role: .cancel) { }
-            Button("OK") {
+            Button("End Session") {
                 timerEngine.forceAdjustTime(bySeconds: -(step * 60))
                 value = max(range.lowerBound, value - step)
             }
+        } message: {
+            Text("Removing \(step) minutes would end the current timer.")
         }
     }
 
