@@ -56,7 +56,7 @@ final class AudioEngine: ObservableObject {
         do {
             let player = try AVAudioPlayer(contentsOf: url)
             player.numberOfLoops = -1 // infinite loop
-            player.volume = isMuted ? 0 : 0.7
+            player.volume = isMuted ? 0 : 0.25
             player.prepareToPlay()
             player.play()
             ambientPlayer = player
@@ -91,7 +91,7 @@ final class AudioEngine: ObservableObject {
 
     func toggleMute() {
         isMuted.toggle()
-        ambientPlayer?.volume = isMuted ? 0 : 0.7
+        ambientPlayer?.volume = isMuted ? 0 : 0.25
     }
 
     func select(_ sound: AmbientSound) {
