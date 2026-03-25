@@ -124,8 +124,7 @@ struct ControlsView: View {
                     DurationRow(
                         label: "Focus",
                         value: $timerEngine.workDuration,
-                        range: 5...120,
-                        step: 5,
+                        range: 1...120,
                         timerEngine: timerEngine,
                         isActiveMode: timerEngine.currentMode == .work
                     )
@@ -133,7 +132,6 @@ struct ControlsView: View {
                         label: "Break",
                         value: $timerEngine.breakDuration,
                         range: 1...30,
-                        step: 5,
                         timerEngine: timerEngine,
                         isActiveMode: timerEngine.currentMode == .break_
                     )
@@ -246,17 +244,17 @@ private struct TrafficLightButton: View {
     }
 }
 
-// MARK: - Duration Row: Label  [−][+]  Value
+// MARK: - Duration Row: Label  [+][−]  1m|5m  Value
 
 private struct DurationRow: View {
     let label: String
     @Binding var value: Int
     let range: ClosedRange<Int>
-    let step: Int
     @ObservedObject var timerEngine: TimerEngine
     let isActiveMode: Bool
-    @State private var minusHover = false
     @State private var plusHover = false
+    @State private var minusHover = false
+    @State private var stepSize: Int = 5
     @State private var showUnderflowAlert = false
 
     private var isRunning: Bool {
@@ -270,23 +268,8 @@ private struct DurationRow: View {
                 .foregroundStyle(.primary)
                 .frame(width: 38, alignment: .leading)
 
+            // + then − (plus on left)
             HStack(spacing: 2) {
-                Button {
-                    handleMinus()
-                } label: {
-                    Image(systemName: "minus")
-                        .font(.system(size: 10, weight: .medium))
-                        .foregroundStyle(.primary)
-                        .frame(width: 22, height: 22)
-                        .background(
-                            RoundedRectangle(cornerRadius: 5)
-                                .fill(minusHover ? .white.opacity(0.1) : .clear)
-                        )
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .onHover { minusHover = $0 }
-
                 Button {
                     handlePlus()
                 } label: {
@@ -302,42 +285,85 @@ private struct DurationRow: View {
                 }
                 .buttonStyle(.plain)
                 .onHover { plusHover = $0 }
+
+                Button {
+                    handleMinus()
+                } label: {
+                    Image(systemName: "minus")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundStyle(.primary)
+                        .frame(width: 22, height: 22)
+                        .background(
+                            RoundedRectangle(cornerRadius: 5)
+                                .fill(minusHover ? .white.opacity(0.1) : .clear)
+                        )
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .onHover { minusHover = $0 }
+            }
+
+            // 1m / 5m step toggle
+            HStack(spacing: 0) {
+                StepToggle(label: "1m", isSelected: stepSize == 1) {
+                    stepSize = 1
+                }
+                StepToggle(label: "5m", isSelected: stepSize == 5) {
+                    stepSize = 5
+                }
             }
 
             Text("\(value)m")
                 .font(.system(size: 12))
                 .monospacedDigit()
                 .foregroundStyle(.primary)
-                .frame(minWidth: 28, alignment: .trailing)
+                .frame(minWidth: 24, alignment: .trailing)
         }
-        .alert("End Session?", isPresented: $showUnderflowAlert) {
+        .alert("End session?", isPresented: $showUnderflowAlert) {
             Button("Cancel", role: .cancel) { }
             Button("End Session") {
-                timerEngine.forceAdjustTime(bySeconds: -(step * 60))
-                value = max(range.lowerBound, value - step)
+                timerEngine.forceAdjustTime(bySeconds: -(stepSize * 60))
+                value = max(range.lowerBound, value - stepSize)
             }
-        } message: {
-            Text("Removing \(step) minutes would end the current timer.")
-        }
-    }
-
-    private func handleMinus() {
-        if isRunning {
-            let wouldSucceed = timerEngine.adjustTime(bySeconds: -(step * 60))
-            if wouldSucceed {
-                value = max(range.lowerBound, value - step)
-            } else {
-                showUnderflowAlert = true
-            }
-        } else {
-            value = max(range.lowerBound, value - step)
         }
     }
 
     private func handlePlus() {
         if isRunning {
-            _ = timerEngine.adjustTime(bySeconds: step * 60)
+            _ = timerEngine.adjustTime(bySeconds: stepSize * 60)
         }
-        value = min(range.upperBound, value + step)
+        value = min(range.upperBound, value + stepSize)
+    }
+
+    private func handleMinus() {
+        if isRunning {
+            let wouldSucceed = timerEngine.adjustTime(bySeconds: -(stepSize * 60))
+            if wouldSucceed {
+                value = max(range.lowerBound, value - stepSize)
+            } else {
+                showUnderflowAlert = true
+            }
+        } else {
+            value = max(range.lowerBound, value - stepSize)
+        }
+    }
+}
+
+// MARK: - Step Toggle (1m / 5m)
+
+private struct StepToggle: View {
+    let label: String
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Text(label)
+                .font(.system(size: 9, weight: isSelected ? .semibold : .regular))
+                .foregroundStyle(isSelected ? .primary : .tertiary)
+                .frame(width: 22, height: 18)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 }
