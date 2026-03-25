@@ -268,22 +268,8 @@ private struct DurationRow: View {
                 .foregroundStyle(.primary)
                 .frame(width: 38, alignment: .leading)
 
-            // + then −
+            // − then +
             HStack(spacing: 2) {
-                Button { handlePlus() } label: {
-                    Image(systemName: "plus")
-                        .font(.system(size: 10, weight: .medium))
-                        .foregroundStyle(.primary)
-                        .frame(width: 22, height: 22)
-                        .background(
-                            RoundedRectangle(cornerRadius: 5)
-                                .fill(plusHover ? .white.opacity(0.1) : .clear)
-                        )
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .onHover { plusHover = $0 }
-
                 Button { handleMinus() } label: {
                     Image(systemName: "minus")
                         .font(.system(size: 10, weight: .medium))
@@ -297,6 +283,20 @@ private struct DurationRow: View {
                 }
                 .buttonStyle(.plain)
                 .onHover { minusHover = $0 }
+
+                Button { handlePlus() } label: {
+                    Image(systemName: "plus")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundStyle(.primary)
+                        .frame(width: 22, height: 22)
+                        .background(
+                            RoundedRectangle(cornerRadius: 5)
+                                .fill(plusHover ? .white.opacity(0.1) : .clear)
+                        )
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .onHover { plusHover = $0 }
             }
 
             // Step size picker (dropdown)
