@@ -4,16 +4,8 @@ import SwiftUI
 @MainActor
 final class FullScreenNotificationWindow: NSWindow {
 
-    init(view: some View) {
-        guard let screen = NSScreen.main else {
-            super.init(
-                contentRect: .zero,
-                styleMask: [.borderless],
-                backing: .buffered,
-                defer: false
-            )
-            return
-        }
+    init?(view: some View) {
+        guard let screen = NSScreen.main else { return nil }
 
         super.init(
             contentRect: screen.frame,

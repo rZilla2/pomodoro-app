@@ -18,11 +18,13 @@ final class FloatingPanelWindow: NSPanel {
         isFloatingPanel = true
         level = .floating
         hidesOnDeactivate = false
+        acceptsMouseMovedEvents = true
         collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         isMovableByWindowBackground = true
         backgroundColor = .clear
         isOpaque = false
         hasShadow = true
+        alphaValue = 0.6
 
         let hosting = NSHostingView(rootView: ControlsView(timerEngine: timerEngine, audioEngine: audioEngine))
         hosting.setFrameSize(hosting.fittingSize)
@@ -34,9 +36,14 @@ final class FloatingPanelWindow: NSPanel {
         setFrameAutosaveName("FloatingPanel2")
     }
 
-    // Allow clicks on buttons inside the panel
+    // Allow clicks and hover tracking inside the panel
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { true }
+    override var acceptsMouseMovedEvents: Bool {
+        get { true }
+        set { }
+    }
+
 
     // Prevent the panel from hiding when it resigns key
     override func resignKey() {

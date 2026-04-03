@@ -1,13 +1,15 @@
 import AVFoundation
+import OSLog
 import SwiftUI
+
+private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.rzilla.pomodoro", category: "audio")
 
 // MARK: - AmbientSound
 
 enum AmbientSound: String, CaseIterable, Identifiable, Sendable {
-    case rain
-    case ocean
     case forest
-    case fireplace
+    case ocean
+    case thunderstorm
 
     var id: String { rawValue }
 
@@ -15,10 +17,9 @@ enum AmbientSound: String, CaseIterable, Identifiable, Sendable {
 
     var displayName: String {
         switch self {
-        case .rain:       return "Rain"
-        case .ocean:      return "Ocean"
-        case .forest:     return "Forest"
-        case .fireplace:  return "Fireplace"
+        case .forest:       return "Forest"
+        case .ocean:        return "Ocean"
+        case .thunderstorm: return "Thunderstorm"
         }
     }
 }
@@ -28,7 +29,14 @@ enum AmbientSound: String, CaseIterable, Identifiable, Sendable {
 @MainActor
 final class AudioEngine: ObservableObject {
 
-    @Published var selectedSound: AmbientSound
+    @Published var selectedSound: AmbientSound {
+        didSet {
+            UserDefaults.standard.set(selectedSound.rawValue, forKey: "selectedSound")
+            if ambientPlayer?.isPlaying == true {
+                startAmbient()
+            }
+        }
+    }
     @Published var isMuted: Bool = true
 
     private var ambientPlayer: AVAudioPlayer?
@@ -61,7 +69,7 @@ final class AudioEngine: ObservableObject {
             player.play()
             ambientPlayer = player
         } catch {
-            print("AudioEngine: failed to start ambient – \(error)")
+            logger.error("Failed to start ambient: \(error.localizedDescription)")
         }
     }
 
@@ -74,18 +82,25 @@ final class AudioEngine: ObservableObject {
         chimePlayer?.stop()
         chimePlayer = nil
 
+        // Use sandbox-safe NSSound API for system sounds
+        if let glass = NSSound(named: "Glass") {
+            glass.play()
+            return
+        }
+
+        // Fallback to bundled chime
         guard let url = Bundle.module.url(forResource: "chime", withExtension: "m4a") else {
-            assertionFailure("AudioEngine: missing bundle resource for chime.m4a")
+            logger.warning("No chime sound available — neither system Glass nor bundled chime found")
             return
         }
         do {
             let player = try AVAudioPlayer(contentsOf: url)
-            player.numberOfLoops = 0 // play once
+            player.numberOfLoops = 0
             player.prepareToPlay()
             player.play()
             chimePlayer = player
         } catch {
-            print("AudioEngine: failed to play chime – \(error)")
+            logger.error("Failed to play bundled chime: \(error.localizedDescription)")
         }
     }
 
@@ -94,11 +109,4 @@ final class AudioEngine: ObservableObject {
         ambientPlayer?.volume = isMuted ? 0 : 0.25
     }
 
-    func select(_ sound: AmbientSound) {
-        selectedSound = sound
-        UserDefaults.standard.set(sound.rawValue, forKey: "selectedSound")
-        if ambientPlayer?.isPlaying == true {
-            startAmbient() // switch track immediately
-        }
-    }
 }

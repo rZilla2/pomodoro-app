@@ -1,9 +1,13 @@
+import ServiceManagement
 import SwiftUI
 
 struct ControlsView: View {
     @ObservedObject var timerEngine: TimerEngine
     @ObservedObject var audioEngine: AudioEngine
     @State private var trayOpen = false
+    @State private var scrollFeedback: Int? = nil
+    @State private var feedbackTask: Task<Void, Never>?
+    @State private var timerHovering = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -12,10 +16,11 @@ struct ControlsView: View {
                 HStack(spacing: 7) {
                     TrafficLightButton(color: .red) {
                         NotificationCenter.default.post(
-                            name: .init("hidePanelRequested"), object: nil)
+                            name: .hidePanelRequested, object: nil)
                     }
                     TrafficLightButton(color: .yellow) {
-                        NSApp.keyWindow?.miniaturize(NSApp)
+                        NotificationCenter.default.post(
+                            name: .hidePanelRequested, object: nil)
                     }
                     TrafficLightButton(color: .green) { }
                     Spacer()
@@ -29,16 +34,71 @@ struct ControlsView: View {
                         .foregroundStyle(.secondary)
                 }
 
-                Text(formatTime(timerEngine.timeRemaining))
-                    .font(.system(size: 48, weight: .ultraLight))
-                    .monospacedDigit()
-                    .foregroundStyle(.primary)
-                    .contentTransition(.numericText())
+                // Scrollable timer display
+                ZStack(alignment: .topTrailing) {
+                    VStack(spacing: 0) {
+                        // Up arrow hint
+                        Image(systemName: "chevron.up")
+                            .font(.system(size: 9, weight: .semibold))
+                            .foregroundStyle(.white.opacity(timerHovering ? 0.35 : 0))
+                            .animation(.easeOut(duration: 0.2), value: timerHovering)
+
+                        Text(formatTime(timerEngine.timeRemaining))
+                            .font(.system(size: 48, weight: .ultraLight))
+                            .monospacedDigit()
+                            .foregroundStyle(.primary)
+                            .contentTransition(.numericText())
+
+                        // Down arrow hint
+                        Image(systemName: "chevron.down")
+                            .font(.system(size: 9, weight: .semibold))
+                            .foregroundStyle(.white.opacity(timerHovering ? 0.35 : 0))
+                            .animation(.easeOut(duration: 0.2), value: timerHovering)
+                    }
+                    .padding(.vertical, 4)
+                    .padding(.horizontal, 14)
+                    .background(
+                        RoundedRectangle(cornerRadius: 10)
+                            .stroke(
+                                timerHovering
+                                    ? Color.white.opacity(0.25)
+                                    : Color.clear,
+                                lineWidth: 1.5
+                            )
+                    )
+                    .background(
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(timerHovering ? Color.white.opacity(0.04) : .clear)
+                    )
+                    .onScrollWheel(isHovering: $timerHovering) { delta in
+                        handleScroll(delta: delta)
+                    }
+
+                    // Scroll feedback badge
+                    if let fb = scrollFeedback {
+                        Text(fb > 0 ? "+\(fb):00" : "\(fb):00")
+                            .font(.system(size: 11, weight: .semibold))
+                            .monospacedDigit()
+                            .foregroundStyle(fb > 0 ? .green : .red)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(
+                                RoundedRectangle(cornerRadius: 5)
+                                    .fill(fb > 0
+                                          ? Color.green.opacity(0.15)
+                                          : Color.red.opacity(0.15))
+                            )
+                            .offset(x: 8, y: -8)
+                            .transition(.opacity)
+                    }
+                }
+                .animation(.easeOut(duration: 0.15), value: scrollFeedback)
 
                 // Action buttons — icon only, no backgrounds
                 HStack(spacing: 12) {
                     if timerEngine.timerState == .idle
-                        || timerEngine.timerState == .paused {
+                        || timerEngine.timerState == .paused
+                        || timerEngine.timerState == .waitingForUser {
                         IconButton(symbol: "play.fill", isPrimary: true) {
                             timerEngine.start()
                         }
@@ -51,6 +111,7 @@ struct ControlsView: View {
                     }
 
                     if timerEngine.timerState == .idle
+                        || timerEngine.timerState == .waitingForUser
                         || (timerEngine.timerState == .running
                             && timerEngine.currentMode == .work) {
                         IconButton(symbol: "cup.and.saucer.fill", isPrimary: false) {
@@ -67,7 +128,8 @@ struct ControlsView: View {
 
                     if timerEngine.timerState == .running
                         || timerEngine.timerState == .paused
-                        || timerEngine.timerState == .onBreak {
+                        || timerEngine.timerState == .onBreak
+                        || timerEngine.timerState == .waitingForUser {
                         IconButton(symbol: "stop.fill", isPrimary: false) {
                             timerEngine.stop()
                         }
@@ -121,21 +183,9 @@ struct ControlsView: View {
                         .labelsHidden()
                     }
 
-                    // Duration rows: Label  [−][+]  Value
-                    DurationRow(
-                        label: "Focus",
-                        value: $timerEngine.workDuration,
-                        range: 1...120,
-                        timerEngine: timerEngine,
-                        isActiveMode: timerEngine.currentMode == .work
-                    )
-                    DurationRow(
-                        label: "Break",
-                        value: $timerEngine.breakDuration,
-                        range: 1...30,
-                        timerEngine: timerEngine,
-                        isActiveMode: timerEngine.currentMode == .break_
-                    )
+                    Divider()
+
+                    LaunchAtLoginToggle()
 
                     Divider()
 
@@ -155,6 +205,50 @@ struct ControlsView: View {
         }
         .frame(width: 220)
         .glassEffect(.regular, in: .rect(cornerRadius: 14))
+        .onDisappear {
+            feedbackTask?.cancel()
+            feedbackTask = nil
+        }
+    }
+
+    // MARK: - Scroll Handling
+
+    private func handleScroll(delta: CGFloat) {
+        // delta > 0 = scroll down = add time; delta < 0 = scroll up = subtract
+        let seconds = delta > 0 ? 60 : -60
+        let newRemaining = timerEngine.timeRemaining + seconds
+        guard newRemaining > 0 else { return }
+
+        let isRunning = timerEngine.timerState == .running || timerEngine.timerState == .paused
+
+        if isRunning {
+            let succeeded = timerEngine.adjustTime(bySeconds: seconds)
+            if !succeeded { return }
+        } else {
+            timerEngine.timeRemaining = newRemaining
+        }
+
+        // Keep base duration in sync
+        let newMinutes = Int(round(Double(newRemaining) / 60.0))
+        if timerEngine.currentMode == .work {
+            guard (1...120).contains(newMinutes) else { return }
+            timerEngine.workDuration = newMinutes
+        } else {
+            guard (1...30).contains(newMinutes) else { return }
+            timerEngine.breakDuration = newMinutes
+        }
+
+        showFeedback(seconds > 0 ? 1 : -1)
+    }
+
+    private func showFeedback(_ delta: Int) {
+        scrollFeedback = delta
+        feedbackTask?.cancel()
+        feedbackTask = Task {
+            try? await Task.sleep(for: .milliseconds(600))
+            guard !Task.isCancelled else { return }
+            scrollFeedback = nil
+        }
     }
 
     private var modeLabel: String {
@@ -172,6 +266,111 @@ struct ControlsView: View {
         let m = seconds / 60
         let s = seconds % 60
         return String(format: "%02d:%02d", m, s)
+    }
+}
+
+// MARK: - Scroll Wheel Modifier
+
+private struct ScrollWheelModifier: ViewModifier {
+    let handler: (CGFloat) -> Void
+    @Binding var isHovering: Bool
+    private static let threshold: CGFloat = 15
+
+    func body(content: Content) -> some View {
+        content.overlay(
+            ScrollWheelView(threshold: Self.threshold, handler: handler, isHovering: $isHovering)
+        )
+    }
+}
+
+private struct ScrollWheelView: NSViewRepresentable {
+    let threshold: CGFloat
+    let handler: (CGFloat) -> Void
+    @Binding var isHovering: Bool
+
+    func makeNSView(context: Context) -> ScrollWheelNSView {
+        let view = ScrollWheelNSView()
+        view.threshold = threshold
+        view.handler = handler
+        view.hoverCallback = { hovering in
+            DispatchQueue.main.async { self.isHovering = hovering }
+        }
+        return view
+    }
+
+    func updateNSView(_ nsView: ScrollWheelNSView, context: Context) {
+        nsView.handler = handler
+        nsView.hoverCallback = { hovering in
+            DispatchQueue.main.async { self.isHovering = hovering }
+        }
+    }
+}
+
+final class ScrollWheelNSView: NSView {
+    var threshold: CGFloat = 15
+    var handler: ((CGFloat) -> Void)?
+    var hoverCallback: ((Bool) -> Void)?
+    private var accumulated: CGFloat = 0
+    private var scrollMonitor: Any?
+    private var trackingArea: NSTrackingArea?
+
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        if let existing = trackingArea {
+            removeTrackingArea(existing)
+        }
+        let area = NSTrackingArea(
+            rect: bounds,
+            options: [.mouseEnteredAndExited, .activeAlways],
+            owner: self,
+            userInfo: nil
+        )
+        addTrackingArea(area)
+        trackingArea = area
+    }
+
+    override func mouseEntered(with event: NSEvent) {
+        hoverCallback?(true)
+    }
+
+    override func mouseExited(with event: NSEvent) {
+        hoverCallback?(false)
+    }
+
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        if window != nil {
+            guard scrollMonitor == nil else { return }
+            scrollMonitor = NSEvent.addLocalMonitorForEvents(matching: .scrollWheel) { [weak self] event in
+                guard let self else { return event }
+                let locationInView = self.convert(event.locationInWindow, from: nil)
+                if self.bounds.contains(locationInView) {
+                    self.accumulated += event.scrollingDeltaY
+                    if abs(self.accumulated) >= self.threshold {
+                        let direction: CGFloat = self.accumulated > 0 ? -1 : 1
+                        self.accumulated = 0
+                        self.handler?(direction)
+                    }
+                    return nil
+                }
+                return event
+            }
+        } else {
+            if let scrollMonitor { NSEvent.removeMonitor(scrollMonitor) }
+            scrollMonitor = nil
+        }
+    }
+
+    override func removeFromSuperview() {
+        if let scrollMonitor { NSEvent.removeMonitor(scrollMonitor) }
+        scrollMonitor = nil
+        super.removeFromSuperview()
+    }
+}
+
+private extension View {
+    func onScrollWheel(isHovering: Binding<Bool>, handler: @escaping (CGFloat) -> Void) -> some View {
+        modifier(ScrollWheelModifier(handler: handler, isHovering: isHovering))
     }
 }
 
@@ -199,6 +398,33 @@ private struct IconButton: View {
         }
         .buttonStyle(.plain)
         .onHover { hovering = $0 }
+    }
+}
+
+// MARK: - Launch at Login Toggle
+
+private struct LaunchAtLoginToggle: View {
+    @State private var isEnabled = SMAppService.mainApp.status == .enabled
+
+    var body: some View {
+        Toggle(isOn: $isEnabled) {
+            Label("Launch at Login", systemImage: "arrow.right.circle")
+                .font(.system(size: 11))
+        }
+        .toggleStyle(.switch)
+        .controlSize(.mini)
+        .foregroundStyle(.secondary)
+        .onChange(of: isEnabled) { _, newValue in
+            do {
+                if newValue {
+                    try SMAppService.mainApp.register()
+                } else {
+                    try SMAppService.mainApp.unregister()
+                }
+            } catch {
+                isEnabled = SMAppService.mainApp.status == .enabled
+            }
+        }
     }
 }
 
@@ -242,111 +468,5 @@ private struct TrafficLightButton: View {
         }
         .buttonStyle(.plain)
         .onHover { hovering = $0 }
-    }
-}
-
-// MARK: - Duration Row: Label  [+][−]  ▾step  (value when idle)
-
-private struct DurationRow: View {
-    let label: String
-    @Binding var value: Int
-    let range: ClosedRange<Int>
-    @ObservedObject var timerEngine: TimerEngine
-    let isActiveMode: Bool
-    @State private var plusHover = false
-    @State private var minusHover = false
-    @State private var stepSize: Int = 5
-    @State private var showUnderflowAlert = false
-
-    private var isRunning: Bool {
-        isActiveMode && (timerEngine.timerState == .running || timerEngine.timerState == .paused)
-    }
-
-    var body: some View {
-        HStack(spacing: 6) {
-            Text(label)
-                .font(.system(size: 12, weight: .light))
-                .foregroundStyle(.primary)
-                .frame(width: 38, alignment: .leading)
-
-            // − then +
-            HStack(spacing: 2) {
-                Button { handleMinus() } label: {
-                    Image(systemName: "minus")
-                        .font(.system(size: 10, weight: .medium))
-                        .foregroundStyle(.primary)
-                        .frame(width: 22, height: 22)
-                        .background(
-                            RoundedRectangle(cornerRadius: 5)
-                                .fill(minusHover ? .white.opacity(0.1) : .clear)
-                        )
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .onHover { minusHover = $0 }
-
-                Button { handlePlus() } label: {
-                    Image(systemName: "plus")
-                        .font(.system(size: 10, weight: .medium))
-                        .foregroundStyle(.primary)
-                        .frame(width: 22, height: 22)
-                        .background(
-                            RoundedRectangle(cornerRadius: 5)
-                                .fill(plusHover ? .white.opacity(0.1) : .clear)
-                        )
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .onHover { plusHover = $0 }
-            }
-
-            // Step size picker (dropdown)
-            Picker(selection: $stepSize) {
-                Text("1m").tag(1)
-                Text("5m").tag(5)
-                Text("10m").tag(10)
-            } label: {
-                EmptyView()
-            }
-            .pickerStyle(.menu)
-            .frame(width: 52)
-            .controlSize(.small)
-
-            // Duration value — only when idle
-            if !isRunning {
-                Text("\(value)m")
-                    .font(.system(size: 12, weight: .light))
-                    .monospacedDigit()
-                    .foregroundStyle(.primary)
-                    .frame(minWidth: 24, alignment: .trailing)
-            }
-        }
-        .alert("End session?", isPresented: $showUnderflowAlert) {
-            Button("Cancel", role: .cancel) { }
-            Button("End Session") {
-                timerEngine.forceAdjustTime(bySeconds: -(stepSize * 60))
-                value = max(range.lowerBound, value - stepSize)
-            }
-        }
-    }
-
-    private func handlePlus() {
-        if isRunning {
-            _ = timerEngine.adjustTime(bySeconds: stepSize * 60)
-        }
-        value = min(range.upperBound, value + stepSize)
-    }
-
-    private func handleMinus() {
-        if isRunning {
-            let wouldSucceed = timerEngine.adjustTime(bySeconds: -(stepSize * 60))
-            if wouldSucceed {
-                value = max(range.lowerBound, value - stepSize)
-            } else {
-                showUnderflowAlert = true
-            }
-        } else {
-            value = max(range.lowerBound, value - stepSize)
-        }
     }
 }

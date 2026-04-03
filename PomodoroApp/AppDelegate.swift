@@ -1,7 +1,10 @@
 import AppKit
 import Combine
+import OSLog
 import ServiceManagement
 import SwiftUI
+
+private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.rzilla.pomodoro", category: "app")
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
@@ -10,7 +13,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var timerEngine: TimerEngine?
     var floatingPanel: FloatingPanelWindow?
     var notificationWindow: FullScreenNotificationWindow?
+    private var pillView: StatusBarPillView?
     private var cancellables = Set<AnyCancellable>()
+    private var hidePanelObserver: NSObjectProtocol?
+    private var workCompleteObserver: NSObjectProtocol?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Single instance: quit if another copy is already running
@@ -69,8 +75,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         floatingPanel = panel
 
         // Listen for hide-panel requests from custom traffic light close button
-        NotificationCenter.default.addObserver(
-            forName: .init("hidePanelRequested"),
+        hidePanelObserver = NotificationCenter.default.addObserver(
+            forName: .hidePanelRequested,
             object: nil,
             queue: .main
         ) { [weak self] _ in
@@ -80,9 +86,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         // Listen for work session completion → show full-screen notification
-        NotificationCenter.default.addObserver(
+        workCompleteObserver = NotificationCenter.default.addObserver(
             forName: .workSessionComplete,
-            object: nil,
+            object: engine,
             queue: .main
         ) { [weak self] _ in
             Task { @MainActor in
@@ -92,7 +98,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Register for launch at login (only if not already registered)
         if SMAppService.mainApp.status == .notRegistered {
-            try? SMAppService.mainApp.register()
+            do {
+                try SMAppService.mainApp.register()
+            } catch {
+                logger.error("Failed to register launch at login: \(error.localizedDescription)")
+            }
         }
     }
 
@@ -102,7 +112,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard let engine = timerEngine, let button = statusItem?.button else { return }
         let time = formatTime(engine.timeRemaining)
 
-        // Determine which SF Symbol to show between flame and timer
+        // Determine which SF Symbol to show
         let symbolName: String?
         switch engine.timerState {
         case .idle:
@@ -117,32 +127,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             symbolName = "bell.fill"
         }
 
-        // Pick the icon: flame when idle, state-specific otherwise
         let iconName = symbolName ?? "timer"
-        guard let symbolImage = NSImage(systemSymbolName: iconName, accessibilityDescription: nil) else { return }
 
-        let attributed = NSMutableAttributedString()
-
-        // Icon as inline attachment
-        let attachment = NSTextAttachment()
-        let config = NSImage.SymbolConfiguration(pointSize: 16, weight: .medium)
-        attachment.image = symbolImage.withSymbolConfiguration(config)
-        let iconString = NSAttributedString(attachment: attachment)
-        attributed.append(iconString)
-
-        // Space + time
-        attributed.append(NSAttributedString(string: " \(time)"))
-
-        // Font for the whole string
-        let font = button.font ?? NSFont.monospacedDigitSystemFont(ofSize: NSFont.systemFontSize, weight: .regular)
-        let range = NSRange(location: 0, length: attributed.length)
-        attributed.addAttribute(.font, value: font, range: range)
-        // Nudge baseline so icon aligns vertically with text
-        let iconRange = NSRange(location: 0, length: iconString.length)
-        attributed.addAttribute(.baselineOffset, value: -1.0, range: iconRange)
-
-        button.image = nil
-        button.attributedTitle = attributed
+        if let existing = pillView {
+            existing.update(iconName: iconName, time: time)
+            let size = existing.fittingSize
+            existing.frame = NSRect(origin: .zero, size: size)
+            button.frame = NSRect(origin: button.frame.origin, size: size)
+            statusItem?.length = size.width
+        } else {
+            let pv = StatusBarPillView(iconName: iconName, time: time)
+            pv.onTap = { [weak self] in self?.statusItemClicked() }
+            pv.onRightClick = { [weak self] event in self?.showContextMenu(from: event) }
+            let size = pv.fittingSize
+            pv.frame = NSRect(origin: .zero, size: size)
+            button.subviews.forEach { $0.removeFromSuperview() }
+            button.addSubview(pv)
+            button.image = nil
+            button.attributedTitle = NSAttributedString(string: "")
+            button.frame = NSRect(origin: button.frame.origin, size: size)
+            statusItem?.length = size.width
+            pillView = pv
+        }
     }
 
     private func formatTime(_ seconds: Int) -> String {
@@ -177,14 +183,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let view = FullScreenNotificationView(
             onDismiss: { [weak self] in
                 self?.dismissNotification()
-                self?.timerEngine?.startBreak()
+                self?.timerEngine?.stop()
             },
-            onSnooze: { [weak self] in
+            onRestart: { [weak self] in
                 self?.dismissNotification()
-                self?.timerEngine?.snooze(minutes: 5)
+                self?.timerEngine?.start()
+            },
+            onAddTime: { [weak self] minutes in
+                self?.dismissNotification()
+                self?.timerEngine?.snooze(minutes: minutes)
+            },
+            onBreak: { [weak self] minutes in
+                self?.dismissNotification()
+                self?.timerEngine?.startBreakWithDuration(seconds: minutes * 60)
             }
         )
-        let window = FullScreenNotificationWindow(view: view)
+        guard let window = FullScreenNotificationWindow(view: view) else { return }
         notificationWindow = window
         window.makeKeyAndOrderFront(nil)
     }
@@ -193,4 +207,130 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         notificationWindow?.orderOut(nil)
         notificationWindow = nil
     }
+
+    // MARK: - Right-Click Context Menu
+
+    private func showContextMenu(from event: NSEvent) {
+        guard let engine = timerEngine else { return }
+        let menu = NSMenu()
+
+        let focusItem = NSMenuItem(title: "Focus \(engine.workDuration)", action: #selector(menuStartFocus), keyEquivalent: "")
+        focusItem.target = self
+        menu.addItem(focusItem)
+
+        let breakItem = NSMenuItem(title: "Break \(engine.breakDuration)", action: #selector(menuBreak), keyEquivalent: "")
+        breakItem.target = self
+        menu.addItem(breakItem)
+
+        let quitItem = NSMenuItem(title: "Quit", action: #selector(menuQuit), keyEquivalent: "")
+        quitItem.target = self
+        menu.addItem(quitItem)
+
+        // Show the menu at the status item
+        if let button = statusItem?.button {
+            menu.popUp(positioning: nil, at: NSPoint(x: 0, y: button.bounds.height + 4), in: button)
+        }
+    }
+
+    @objc private func menuStartFocus() { timerEngine?.start() }
+    @objc private func menuPause() { timerEngine?.pause() }
+    @objc private func menuBreak() { timerEngine?.startBreak() }
+    @objc private func menuStop() { timerEngine?.stop() }
+    @objc private func menuTogglePanel() { togglePanel() }
+    @objc private func menuQuit() { NSApplication.shared.terminate(nil) }
+}
+
+// MARK: - Status Bar Pill View
+
+@MainActor
+final class StatusBarPillView: NSView {
+    var onTap: (() -> Void)?
+
+    private static let rustyRed = NSColor(red: 0.78, green: 0.30, blue: 0.24, alpha: 1.0)
+    private static let hPad: CGFloat = 8
+    private static let iconTextGap: CGFloat = 5
+    private static let cornerRadius: CGFloat = 5
+
+    // Menu bar is 22pt; use full height with 2pt inset top/bottom
+    private static let barHeight: CGFloat = 22
+    private static let pillHeight: CGFloat = barHeight - 2
+    private static let fontSize: CGFloat = 13
+    private static let iconPt: CGFloat = 14
+
+    private(set) var iconName: String
+    private(set) var time: String
+
+    init(iconName: String, time: String) {
+        self.iconName = iconName
+        self.time = time
+        super.init(frame: .zero)
+        setAccessibilityLabel("Pomodoro timer: \(time)")
+        setAccessibilityRole(.button)
+    }
+
+    func update(iconName: String, time: String) {
+        guard self.iconName != iconName || self.time != time else { return }
+        self.iconName = iconName
+        self.time = time
+        setAccessibilityLabel("Pomodoro timer: \(time)")
+        let newSize = fittingSize
+        frame = NSRect(origin: frame.origin, size: newSize)
+        needsDisplay = true
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) { fatalError() }
+
+    override var fittingSize: NSSize {
+        let font = NSFont.monospacedDigitSystemFont(ofSize: Self.fontSize, weight: .medium)
+        let textSize = (time as NSString).size(withAttributes: [.font: font])
+        let width = Self.hPad + Self.iconPt + Self.iconTextGap + textSize.width + Self.hPad
+        return NSSize(width: ceil(width), height: Self.barHeight)
+    }
+
+    override func draw(_ dirtyRect: NSRect) {
+        // Center the pill vertically in the menu bar slot
+        let pillY = (bounds.height - Self.pillHeight) / 2
+        let pillRect = NSRect(x: 0, y: pillY, width: bounds.width, height: Self.pillHeight)
+        let pill = NSBezierPath(roundedRect: pillRect, xRadius: Self.cornerRadius, yRadius: Self.cornerRadius)
+        Self.rustyRed.setFill()
+        pill.fill()
+
+        let font = NSFont.monospacedDigitSystemFont(ofSize: Self.fontSize, weight: .medium)
+        let textAttrs: [NSAttributedString.Key: Any] = [
+            .font: font,
+            .foregroundColor: NSColor.white,
+        ]
+        let textSize = (time as NSString).size(withAttributes: textAttrs)
+
+        let contentWidth = Self.iconPt + Self.iconTextGap + textSize.width
+        let startX = (bounds.width - contentWidth) / 2
+
+        // Draw SF Symbol icon in white — use actual symbol size for proper centering
+        if let symbol = NSImage(systemSymbolName: iconName, accessibilityDescription: nil) {
+            let config = NSImage.SymbolConfiguration(pointSize: Self.iconPt, weight: .medium)
+                .applying(.init(paletteColors: [.white]))
+            if let tinted = symbol.withSymbolConfiguration(config) {
+                let actualSize = tinted.size
+                let iconX = startX + (Self.iconPt - actualSize.width) / 2
+                let iconY = pillY + (Self.pillHeight - actualSize.height) / 2
+                tinted.draw(in: NSRect(x: iconX, y: iconY, width: actualSize.width, height: actualSize.height))
+            }
+        }
+
+        // Draw time text in white
+        let textX = startX + Self.iconPt + Self.iconTextGap
+        let textY = pillY + (Self.pillHeight - textSize.height) / 2
+        (time as NSString).draw(at: NSPoint(x: textX, y: textY), withAttributes: textAttrs)
+    }
+
+    override func mouseUp(with event: NSEvent) {
+        onTap?()
+    }
+
+    override func rightMouseUp(with event: NSEvent) {
+        onRightClick?(event)
+    }
+
+    var onRightClick: ((NSEvent) -> Void)?
 }

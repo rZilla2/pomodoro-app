@@ -17,7 +17,8 @@ struct MenuBarView: View {
 
             HStack(spacing: 16) {
                 if timerEngine.timerState == .idle
-                    || timerEngine.timerState == .paused {
+                    || timerEngine.timerState == .paused
+                    || timerEngine.timerState == .waitingForUser {
                     Button("Start") { timerEngine.start() }
                         .keyboardShortcut(.defaultAction)
                 }
@@ -26,7 +27,8 @@ struct MenuBarView: View {
                 }
                 if timerEngine.timerState == .running
                     || timerEngine.timerState == .paused
-                    || timerEngine.timerState == .onBreak {
+                    || timerEngine.timerState == .onBreak
+                    || timerEngine.timerState == .waitingForUser {
                     Button("Stop") { timerEngine.stop() }
                 }
             }

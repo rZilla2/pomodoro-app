@@ -1,9 +1,13 @@
 import SwiftUI
 import AppKit
+import OSLog
 
 extension Notification.Name {
     static let workSessionComplete = Notification.Name("workSessionComplete")
+    static let hidePanelRequested = Notification.Name("hidePanelRequested")
 }
+
+private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.rzilla.pomodoro", category: "timer")
 
 @MainActor
 final class TimerEngine: ObservableObject {
@@ -11,26 +15,34 @@ final class TimerEngine: ObservableObject {
     enum Mode: Sendable { case work, break_ }
 
     @Published var timerState: TimerState = .idle
-    @Published var timeRemaining: Int = 15 * 60
+    @Published var timeRemaining: Int = 25 * 60
     @Published var currentMode: Mode = .work
     @Published var canResumeWork: Bool = false
 
-    @AppStorage("workDuration") var workDuration: Int = 15 {
+    @AppStorage("workDuration") var workDuration: Int = 25 {
         didSet {
+            let clamped = max(1, min(120, workDuration))
+            if clamped != workDuration { workDuration = clamped }
             if timerState == .idle && currentMode == .work {
                 timeRemaining = workDuration * 60
             }
         }
     }
-    @AppStorage("breakDuration") var breakDuration: Int = 5
+    @AppStorage("breakDuration") var breakDuration: Int = 5 {
+        didSet {
+            let clamped = max(1, min(30, breakDuration))
+            if clamped != breakDuration { breakDuration = clamped }
+        }
+    }
 
-    unowned let audioEngine: AudioEngine
+    weak var audioEngine: AudioEngine?
 
     private var startDate: Date?
     private var targetDuration: Int = 0
     private var ticker: Timer?
     private var pausedRemaining: Int = 0
     private var savedWorkRemaining: Int = 0
+    private var wakeObserver: NSObjectProtocol?
 
     // MARK: - Init
 
@@ -44,15 +56,15 @@ final class TimerEngine: ObservableObject {
         if timerState == .paused {
             resumeFromPause()
             if currentMode == .work {
-                audioEngine.startAmbient()
+                audioEngine?.startAmbient()
             }
             return
         }
         canResumeWork = false
-        targetDuration = (currentMode == .work ? workDuration : breakDuration) * 60
+        targetDuration = max(1, (currentMode == .work ? workDuration : breakDuration)) * 60
         beginSession()
         if currentMode == .work {
-            audioEngine.startAmbient()
+            audioEngine?.startAmbient()
         }
     }
 
@@ -62,14 +74,14 @@ final class TimerEngine: ObservableObject {
         canResumeWork = false
         targetDuration = seconds
         beginSession()
-        audioEngine.startAmbient()
+        audioEngine?.startAmbient()
     }
 
     /// Start break with a custom duration in seconds (for testing)
     func startBreakWithDuration(seconds: Int) {
         ticker?.invalidate()
         ticker = nil
-        audioEngine.stopAmbient()
+        audioEngine?.stopAmbient()
         currentMode = .break_
         canResumeWork = false
         targetDuration = seconds
@@ -82,7 +94,7 @@ final class TimerEngine: ObservableObject {
         ticker?.invalidate()
         ticker = nil
         timerState = .paused
-        audioEngine.stopAmbient()
+        audioEngine?.stopAmbient()
     }
 
     func startBreak() {
@@ -93,7 +105,7 @@ final class TimerEngine: ObservableObject {
         }
         ticker?.invalidate()
         ticker = nil
-        audioEngine.stopAmbient()
+        audioEngine?.stopAmbient()
         currentMode = .break_
         targetDuration = breakDuration * 60
         beginSession()
@@ -107,7 +119,7 @@ final class TimerEngine: ObservableObject {
         canResumeWork = false
         targetDuration = savedWorkRemaining
         beginSession()
-        audioEngine.startAmbient()
+        audioEngine?.startAmbient()
     }
 
     func snooze(minutes: Int) {
@@ -125,8 +137,10 @@ final class TimerEngine: ObservableObject {
         let newRemaining = timeRemaining + delta
         if newRemaining <= 0 { return false }
         targetDuration += delta
-        // Recalculate timeRemaining from the adjusted target
-        if let start = startDate {
+        if timerState == .paused {
+            pausedRemaining = newRemaining
+            timeRemaining = newRemaining
+        } else if let start = startDate {
             let elapsed = Int(Date().timeIntervalSince(start))
             timeRemaining = max(0, targetDuration - elapsed)
         } else {
@@ -152,13 +166,14 @@ final class TimerEngine: ObservableObject {
         ticker?.invalidate()
         ticker = nil
         startDate = nil
-        audioEngine.stopAmbient()
+        audioEngine?.stopAmbient()
         currentMode = .work
         canResumeWork = false
         savedWorkRemaining = 0
         timeRemaining = workDuration * 60
         timerState = .idle
-        NotificationCenter.default.removeObserver(self, name: NSWorkspace.didWakeNotification, object: nil)
+        if let obs = wakeObserver { NotificationCenter.default.removeObserver(obs) }
+        wakeObserver = nil
     }
 
     // MARK: - Private
@@ -189,8 +204,11 @@ final class TimerEngine: ObservableObject {
     }
 
     private func subscribeToWake() {
-        NotificationCenter.default.removeObserver(self, name: NSWorkspace.didWakeNotification, object: nil)
-        NotificationCenter.default.addObserver(
+        if let existing = wakeObserver {
+            NotificationCenter.default.removeObserver(existing)
+            wakeObserver = nil
+        }
+        wakeObserver = NotificationCenter.default.addObserver(
             forName: NSWorkspace.didWakeNotification,
             object: nil,
             queue: .main
@@ -213,14 +231,15 @@ final class TimerEngine: ObservableObject {
     private func handleSessionComplete() {
         ticker?.invalidate()
         ticker = nil
-        NotificationCenter.default.removeObserver(self, name: NSWorkspace.didWakeNotification, object: nil)
+        if let obs = wakeObserver { NotificationCenter.default.removeObserver(obs) }
+        wakeObserver = nil
 
         if currentMode == .work {
-            audioEngine.stopAmbient()
-            audioEngine.playChime()
+            audioEngine?.stopAmbient()
+            audioEngine?.playChime()
             canResumeWork = false
             timerState = .waitingForUser
-            NotificationCenter.default.post(name: .workSessionComplete, object: nil)
+            NotificationCenter.default.post(name: .workSessionComplete, object: self)
         } else {
             // Break complete — resume work if saved, otherwise idle
             if canResumeWork, savedWorkRemaining > 0 {
@@ -229,7 +248,7 @@ final class TimerEngine: ObservableObject {
                 targetDuration = savedWorkRemaining
                 savedWorkRemaining = 0
                 beginSession()
-                audioEngine.startAmbient()
+                audioEngine?.startAmbient()
             } else {
                 currentMode = .work
                 canResumeWork = false
