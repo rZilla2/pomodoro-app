@@ -24,7 +24,7 @@ final class FloatingPanelWindow: NSPanel {
         backgroundColor = .clear
         isOpaque = false
         hasShadow = true
-        alphaValue = 0.6
+        alphaValue = 0.9
 
         let hosting = NSHostingView(rootView: ControlsView(timerEngine: timerEngine, audioEngine: audioEngine))
         hosting.setFrameSize(hosting.fittingSize)

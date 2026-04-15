@@ -1,5 +1,25 @@
+import AppKit
 import ServiceManagement
 import SwiftUI
+
+struct VisualEffectBackground: NSViewRepresentable {
+    let material: NSVisualEffectView.Material
+    let blendingMode: NSVisualEffectView.BlendingMode
+
+    func makeNSView(context: Context) -> NSVisualEffectView {
+        let v = NSVisualEffectView()
+        v.material = material
+        v.blendingMode = blendingMode
+        v.state = .active
+        v.isEmphasized = true
+        return v
+    }
+
+    func updateNSView(_ nsView: NSVisualEffectView, context: Context) {
+        nsView.material = material
+        nsView.blendingMode = blendingMode
+    }
+}
 
 struct ControlsView: View {
     @ObservedObject var timerEngine: TimerEngine
@@ -11,7 +31,7 @@ struct ControlsView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            VStack(spacing: 8) {
+            VStack(spacing: 6) {
                 // Traffic lights — always visible, native 8px inset
                 HStack(spacing: 7) {
                     TrafficLightButton(color: .red) {
@@ -26,7 +46,7 @@ struct ControlsView: View {
                     Spacer()
                 }
                 .frame(height: 12)
-                .padding(.horizontal, -6)
+                .padding(.horizontal, 0)
 
                 if !modeLabel.isEmpty {
                     Text(modeLabel)
@@ -55,7 +75,7 @@ struct ControlsView: View {
                             .foregroundStyle(.white.opacity(timerHovering ? 0.35 : 0))
                             .animation(.easeOut(duration: 0.2), value: timerHovering)
                     }
-                    .padding(.vertical, 4)
+                    .padding(.vertical, 1)
                     .padding(.horizontal, 14)
                     .background(
                         RoundedRectangle(cornerRadius: 10)
@@ -80,7 +100,7 @@ struct ControlsView: View {
                             .font(.system(size: 11, weight: .semibold))
                             .monospacedDigit()
                             .foregroundStyle(fb > 0 ? .green : .red)
-                            .padding(.horizontal, 6)
+                            .padding(.horizontal, 1)
                             .padding(.vertical, 2)
                             .background(
                                 RoundedRectangle(cornerRadius: 5)
@@ -143,19 +163,19 @@ struct ControlsView: View {
                     }
                 } label: {
                     Image(systemName: trayOpen ? "chevron.up" : "chevron.down")
-                        .font(.system(size: 8, weight: .semibold))
-                        .foregroundStyle(.tertiary)
-                        .frame(width: 32, height: 12)
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 60, height: 22)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }
-            .padding(.top, 14)
-            .padding(.horizontal, 18)
-            .padding(.bottom, trayOpen ? 8 : 18)
+            .padding(.top, 8)
+            .padding(.horizontal, 1)
+            .padding(.bottom, trayOpen ? 4 : 14)
 
             if trayOpen {
-                VStack(spacing: 10) {
+                VStack(spacing: 6) {
                     Divider()
 
                     HStack(spacing: 6) {
@@ -198,13 +218,16 @@ struct ControlsView: View {
                     .foregroundStyle(.secondary)
                     .font(.system(size: 11))
                 }
-                .padding(.horizontal, 18)
-                .padding(.bottom, 14)
+                .padding(.horizontal, 1)
+                .padding(.bottom, 8)
                 .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
         .frame(width: 220)
-        .glassEffect(.regular, in: .rect(cornerRadius: 14))
+        .background(
+            VisualEffectBackground(material: .popover, blendingMode: .behindWindow)
+                .clipShape(.rect(cornerRadius: 14))
+        )
         .onDisappear {
             feedbackTask?.cancel()
             feedbackTask = nil
